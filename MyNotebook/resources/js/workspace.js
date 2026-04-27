@@ -1081,16 +1081,21 @@ async function uploadToWiki() {
     // Gọi API upload
     try {
         const uploadResult = await apiClient.apiPost(`/ai/wiki/upload`, wikiData);
+
+        // Kiểm tra kết quả từ Backend trả về
         if (uploadResult && uploadResult.status === "success") {
             alert("Đã upload dữ liệu lên Wiki thành công!");
+            
             const wikiUrlName = notebookData.name.replace(/\s+/g, '_');
             location.href = `http://localhost/wikicrop/index.php/Draft:${wikiUrlName}`;
         } else {
-            alert("Lỗi khi upload dữ liệu lên Wiki.");
+            
+            const errorMsg = uploadResult?.message || "Không xác định được nguyên nhân.";
+            alert(`Lỗi hệ thống: ${errorMsg}`);
         }
-    } catch (err) {
-        console.error("Upload error:", err);
-        alert("Lỗi kết nối khi upload.");
+    } catch (error) {
+        console.error("Lỗi thực thi API:", error);
+        alert("Không thể kết nối đến máy chủ API. Vui lòng kiểm tra lại tài khoản bot");
     }
 
     return wikiData;

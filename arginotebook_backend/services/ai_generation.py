@@ -1,4 +1,5 @@
 import json
+from urllib import response
 from sqlalchemy.orm import Session
 from databases import models, crud_content, crud_notebook
 from schemas import content_schema, notebook_schema
@@ -180,10 +181,7 @@ def upload_article_to_wiki(article_json):
 
     admin_account = load_admin_account()
     if not admin_account:
-        return {"status": "error", "message": "Admin account not configured"}
-
-    # USERNAME = "Hoangphucadmin@PythonScript"
-    # PASSWORD = "iqclvmoj8vrbjtc6vcbdtdmp85lsl5uj" 
+        return {"status": "error", "message": "Admin account not configured"} 
 
     USERNAME = admin_account["username"]
     PASSWORD = admin_account["password"]
@@ -238,12 +236,21 @@ def upload_article_to_wiki(article_json):
         }
         
         response = session.post(WIKI_API_URL, data=params_edit).json()
+
+        if "error" in response:
+            error_msg = response["error"].get("info", "Unknown API error")
+            print(f"Post error: {response}")
+            return {"status": "error", "message": f"Wiki Error: {error_msg}"}
+
         if "edit" in response and response["edit"]["result"] == "Success":
             print(f"Posted: {title}")
-            return {"status": "success", "message": f"Article '{title}' uploaded to Draft", "url": f"http://localhost/wikicrop/index.php/title"}
-        else:
-            print(f"Post error: {response}")
-            return {"status": "error", "message": f"Failed to upload article '{title}'"}
+            return {
+                "status": "success", 
+                "message": f"Article '{title}' uploaded", 
+                "url": f"http://localhost/wikicrop/index.php/{title}"
+            }
+        
+        return {"status": "error", "message": "Unexpected response from Wiki"}
     except Exception as e:
         print(f"API connection error: {e}")
         return {"status": "error", "message": "API connection error"}

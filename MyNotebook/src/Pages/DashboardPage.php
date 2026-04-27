@@ -70,8 +70,6 @@ class DashboardPage {
                     </a>
                     <a href='{$sourceManagerUrl}' class='ws-btn-outline'>
                         <i class='fas fa-database'></i> Cài đặt nguồn
-                    </a><a href='{$sourceManagerUrl}' class='ws-btn-outline'>
-                        <i class='fas fa-database'></i> Cài đặt nguồn
                     </a>
                 </div>
 

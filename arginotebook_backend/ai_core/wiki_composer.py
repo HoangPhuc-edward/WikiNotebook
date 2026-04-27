@@ -55,7 +55,7 @@ class WikiComposer:
     def _get_relevant_chunks(self, title: str) -> List[Dict]:
         query_vector = self.embedding_model.encode(title).tolist()
         
-        initial_k = 20 
+        initial_k = 7 
         results = self.collection.query(
             query_embeddings=[query_vector],
             n_results=initial_k, 
@@ -141,7 +141,7 @@ class WikiComposer:
                         continue
                     else:
                         print("Query Expansion error - max retries exceeded")
-                        return f"{self.name} {title} {description}"
+                        return f"{self.name} {title} {description} (Vượt quá số lần thử tối đa)"
 
                 return expanded_query.strip().strip('"').strip("'")[:300]
             except Exception as e:
@@ -202,11 +202,11 @@ class WikiComposer:
                     if wait_count < max_waits:
                         wait_count += 1
                         print(f"Waiting 60 seconds (attempt {wait_count}/{max_waits})...")
-                        time.sleep(10)
+                        time.sleep(60)
                         continue
                     else:
                         print("Write section error - max retries exceeded")
-                        raise Exception("Write section error - LLM failed")
+                        raise Exception("Write section error - LLM failed (quá số lượng token cho phép)")
 
                 clean_text = response.strip()
                 clean_text = re.sub(r'[\*\#\_]', '', clean_text)
