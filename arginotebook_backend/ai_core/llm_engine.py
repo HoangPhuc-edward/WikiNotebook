@@ -84,7 +84,9 @@ class LLMManager:
             
             system_msg = options.get("system_message", "Bạn là trợ lý AI hữu ích, trả lời bằng Tiếng Việt.")
             temp = options.get("temperature", 0.2)
-            max_tok = options.get("max_tokens", 15000)
+         
+            requested_max = options.get("max_tokens", 2048)
+            max_tok = min(requested_max, 8192)
             top_p = options.get("top_p", 0.9)
 
             response = client.chat.completions.create(
@@ -108,7 +110,7 @@ class LLMManager:
             ollama_options = {
                 "temperature": options.get("temperature", 0.2),
                 "top_p": options.get("top_p", 0.9),
-                "num_predict": options.get("max_tokens", 4000) # Ollama dùng num_predict thay cho max_tokens
+                "num_predict": options.get("max_tokens", 2048) # Ollama dùng num_predict thay cho max_tokens
             }
 
             payload = {
@@ -164,32 +166,13 @@ class LLMManager:
             return f"Lỗi API Together: {str(e)}"
 
 if __name__ == "__main__":
-    config = {}
-    try:
-        with open("LLM.txt", "r", encoding="utf-8") as f:
-            lines = f.readlines()
-            for line in lines:
-                if ":" in line:
-                    key, value = line.split(":", 1)
-                    config[key.strip()] = value.strip()
-        
-        print("Đã đọc cấu hình!", config)
-        
-        manager = LLMManager(
-            provider=config.get("Provider"),
-            base_url=config.get("Base URL"),
-            api_key=config.get("API KEY"),
-            model_name=config.get("Model Name")
-        )
+    manager = LLMManager(
+        provider="OpenAI",
+        base_url="here url",
+        api_key="here key",
+        model_name="gpt-3.5-turbo"
+    )
+    print("First", manager.model_name)
 
-        print("\n--- TEST SEND PROMPT ---")
-        response = manager.send_prompt(
-            "Chào bạn, 1 + 1 bằng mấy?", 
-            options={"temperature": 0.5, "system_message": "Bạn là giáo viên toán."}
-        )
-        print("Kết quả:", response)
-
-    except FileNotFoundError:
-        print("Không tìm thấy file LLM.txt")
-    except Exception as e:
-        print(f"Lỗi khởi chạy: {e}")
+    manager.model_name = "gpt-4"
+    print("Second", manager.model_name)

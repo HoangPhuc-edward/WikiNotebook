@@ -41,11 +41,11 @@ class WikiComposer:
         self.reranker.tokenizer.model_max_length = 256
         self.reranker.max_seq_length = 256
 
-        self.context: str = self._fetch_random_context()[:600]
+        self.context: str = self._fetch_random_context()[:300]
 
     def _fetch_random_context(self) -> str:
         try:
-            results = self.collection.get(where={"doc_name": self.session_id}, limit=10)
+            results = self.collection.get(where={"doc_name": self.session_id}, limit=4)
             docs = results.get("documents", [])
             if not docs: return ""
             return "\n...\n".join(docs)
@@ -55,7 +55,7 @@ class WikiComposer:
     def _get_relevant_chunks(self, title: str) -> List[Dict]:
         query_vector = self.embedding_model.encode(title).tolist()
         
-        initial_k = 7 
+        initial_k = 10 
         results = self.collection.query(
             query_embeddings=[query_vector],
             n_results=initial_k, 
@@ -105,15 +105,6 @@ class WikiComposer:
         prompt = f"""
         ### VAI TRÒ:
         Bạn là một chuyên gia tìm kiếm thông tin và tối ưu hóa truy vấn (SEO).
-        
-        ### THÔNG TIN BÀI VIẾT:
-        - Tên bài: {self.name}
-        - Bối cảnh chung: {self.context}
-        
-        ### MỤC CẦN VIẾT:
-        - Tiêu đề mục: "{title}"
-        - Mô tả yêu cầu: {description}
-        
         ### NHIỆM VỤ:
         Hãy viết lại một "câu truy vấn tìm kiếm" (search query) để tìm thông tin cho mục này trong cơ sở dữ liệu.
         
@@ -123,17 +114,32 @@ class WikiComposer:
         3. Viết dưới dạng một đoạn văn ngắn hoặc các câu nối tiếp nhau, khoảng 30-50 từ.
         4. CHỈ TRẢ VỀ NỘI DUNG CÂU TRUY VẤN, KHÔNG GIẢI THÍCH.
         5. KHÔNG GHI NGUYÊN BỐI CẢNH VÀO CÂU TRUY VẤN, CHỈ TẬP TRUNG VÀO VIỆC MỞ RỘNG TIÊU ĐỀ VÀ MÔ TẢ YÊU CẦU THÀNH CÂU TRUY VẤN TÌM KIẾM.
-        """
+        
+        ### MỤC CẦN VIẾT:
+        - Tiêu đề mục: "{title}"
+        - Mô tả yêu cầu: {description}
+
+        ### THÔNG TIN BÀI VIẾT:
+        - Tên bài: {self.name}
+        - Bối cảnh chung: {self.context}
+        """    
         
         wait_count = 0
         max_waits = 3
+        _small_fallbacks = ["groq/compound-mini", "meta-llama/llama-4-scout-17b-16e-instruct"]
+        fallback_idx = 0
 
         while True:
             try:
-                expanded_query = self.llm_small.send_prompt(prompt, options={"temperature": 0.3})
+                expanded_query = self.llm_small.send_prompt(prompt[:1500], options={"temperature": 0.5, "max_tokens": 1024})
 
                 if self._is_error_response(expanded_query):
                     print(f"Query Expansion error (error in response): {expanded_query}")
+                    if self.llm_small.provider == "OpenAI" and fallback_idx < len(_small_fallbacks):
+                        self.llm_small.model_name = _small_fallbacks[fallback_idx]
+                        fallback_idx += 1
+                        print(f"Switching llm_small model to: {self.llm_small.model_name}")
+                        continue
                     if wait_count < max_waits:
                         wait_count += 1
                         print(f"Waiting 60 seconds (attempt {wait_count}/{max_waits})...")
@@ -170,35 +176,42 @@ class WikiComposer:
             raw_sources_meta.append(item['metadata'])
 
         prompt = f"""
+            ### YÊU CẦU:
+            1. Tổng hợp thông tin từ dữ liệu tham khảo thành đoạn văn xuôi mượt mà.
+            2. Tuyệt đối KHÔNG sử dụng ký tự Markdown (*, #, **, __).
+            3. KHÔNG sử dụng dấu xuống dòng (\\n) bên trong đoạn văn.
+            4. Nếu dữ liệu không đủ, chỉ viết những gì có chắc chắn.
+
             ### VAI TRÒ:
             {self.template.system_instruction}
 
             ### BỐI CẢNH TOÀN BÀI:
             {self.context}
 
-            ### DỮ LIỆU THAM KHẢO:
-            {context_str}
-
             ### NHIỆM VỤ:
             Viết nội dung cho mục: "{title}".
             Hướng dẫn chi tiết: {description}
 
-            ### YÊU CẦU:
-            1. Tổng hợp thông tin từ dữ liệu tham khảo thành đoạn văn xuôi mượt mà.
-            2. Tuyệt đối KHÔNG sử dụng ký tự Markdown (*, #, **, __).
-            3. KHÔNG sử dụng dấu xuống dòng (\\n) bên trong đoạn văn.
-            4. Nếu dữ liệu không đủ, chỉ viết những gì có chắc chắn.
+            ### DỮ LIỆU THAM KHẢO:
+            {context_str}
             """
         
         wait_count = 0
         max_waits = 3
+        _main_fallbacks = ["groq/compound", "openai/gpt-oss-120b", "qwen/qwen3-32b"]
+        fallback_idx = 0
 
         while True:
             try:
-                response = self.llm.send_prompt(prompt[:11999], options={"temperature": 0.1})
+                response = self.llm.send_prompt(prompt[:4000], options={"temperature": 0.1, "max_tokens": 4000})
 
                 if self._is_error_response(response):
                     print(f"Write section error (error in response): {response}")
+                    if self.llm.provider == "OpenAI" and fallback_idx < len(_main_fallbacks):
+                        self.llm.model_name = _main_fallbacks[fallback_idx]
+                        fallback_idx += 1
+                        print(f"Switching llm model to: {self.llm.model_name}")
+                        continue
                     if wait_count < max_waits:
                         wait_count += 1
                         print(f"Waiting 60 seconds (attempt {wait_count}/{max_waits})...")

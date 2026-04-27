@@ -7,7 +7,7 @@ from ai_core.extractor import Extractor
 from config_loader import load_chroma_client
 
 class Preprocessor:
-    def __init__(self, extract_model_size="base", embedding_model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2", chunk_size=800, chunk_overlap=100):
+    def __init__(self, extract_model_size="base", embedding_model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2", chunk_size=600, chunk_overlap=100):
         self.extractor = Extractor(model_size=extract_model_size)
         self.embedding_model = SentenceTransformer(embedding_model_name)
 
