@@ -3,7 +3,7 @@ function initLLMManager() {
     const listContainer = document.getElementById('llm-list-container');
     if (!listContainer) return; // Nếu không có thì thoát tĩnh lặng
 
-    console.log("LLM Manager đã khởi động thành công!");
+    console.log("LLM Manager started successfully!");
 
     // Gắn sự kiện (Event Listeners) cho các nút cố định trên Form
     document.getElementById('btn_save').addEventListener('click', handleSaveLLM);
@@ -32,20 +32,20 @@ if (document.readyState === "loading") {
 // 1. HÀM GET: LẤY VÀ HIỂN THỊ DANH SÁCH
 // ==========================================
 async function loadLLMs() {
-    console.log("Bắt đầu tải danh sách LLM...");
+    console.log("Starting to load the LLM list...");
     const listContainer = document.getElementById('llm-list-container');
-    listContainer.innerHTML = "<p style='color: #666;'>Đang tải dữ liệu...</p>";
+    listContainer.innerHTML = `<p style='color: #666;'>${mnI18n.t('llm.loading')}</p>`;
 
     const userId = apiClient.getUserId();
     const data = await apiClient.apiGet(`/llms/${userId}`);
 
     if (!data) {
-        listContainer.innerHTML = "<p style='color: red;'>Lỗi khi tải danh sách LLM.</p>";
+        listContainer.innerHTML = `<p style='color: red;'>${mnI18n.t('llm.error_loading_list')}</p>`;
         return;
     }
 
     if (data.length === 0) {
-        listContainer.innerHTML = "<p style='color: #666;'>Chưa có cấu hình LLM nào.</p>";
+        listContainer.innerHTML = `<p style='color: #666;'>${mnI18n.t('llm.no_config')}</p>`;
         return;
     }
 
@@ -57,10 +57,10 @@ async function loadLLMs() {
         // Tạo nút Kích hoạt hoặc Nhãn tùy trạng thái
         let statusHtml = '';
         if (llm.is_active) {
-            statusHtml = `<span style='color: #059669; font-size: 12px; font-weight: bold; padding: 2px 6px; background: #d1fae5; border-radius: 4px;'>Đang kích hoạt</span>`;
+            statusHtml = `<span style='color: #059669; font-size: 12px; font-weight: bold; padding: 2px 6px; background: #d1fae5; border-radius: 4px;'>${mnI18n.t('llm.active')}</span>`;
         } else {
-            // Dùng class 'btn-activate' để JS dễ nhận diện
-            statusHtml = `<button class="btn-activate" style='background: #10b981; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;'>Kích hoạt</button>`;
+            // Use the 'btn-activate' class so JS can detect it easily
+            statusHtml = `<button class="btn-activate" style='background: #10b981; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;'>${mnI18n.t('llm.activate')}</button>`;
         }
 
         div.innerHTML = `
@@ -96,8 +96,8 @@ function selectLLM(llm) {
     document.getElementById('form_api_key').value = llm.api_key;
     document.getElementById('form_model_name').value = llm.model_name;
 
-    document.getElementById('form-title').innerText = "Cập nhật LLM: " + llm.model_name;
-    document.getElementById('btn_save').innerText = "Cập nhật";
+    document.getElementById('form-title').innerText = mnI18n.t('llm.update_title', { name: llm.model_name });
+    document.getElementById('btn_save').innerText = mnI18n.t('llm.update_button');
     
     toggleButtons(false);
 }
@@ -109,8 +109,8 @@ function cancelEdit() {
     document.getElementById('form_api_key').value = '';
     document.getElementById('form_model_name').value = '';
 
-    document.getElementById('form-title').innerText = "Thêm cấu hình LLM mới";
-    document.getElementById('btn_save').innerText = "Thêm mới";
+    document.getElementById('form-title').innerText = mnI18n.t('llm.create_title');
+    document.getElementById('btn_save').innerText = mnI18n.t('llm.add_button');
     
     toggleButtons(true);
 }
@@ -146,7 +146,7 @@ async function handleSaveLLM() {
     };
 
     if (!payload.provider || !payload.model_name) {
-        alert("Vui lòng nhập đủ Nhà cung cấp và Tên mô hình!");
+        alert(mnI18n.t('llm.enter_required_alert'));
         return;
     }
 
@@ -158,7 +158,7 @@ async function handleSaveLLM() {
     }
 
     if (result) {
-        alert(id ? "Cập nhật thành công!" : "Thêm mới thành công!");
+        alert(id ? mnI18n.t('llm.update_success') : mnI18n.t('llm.save_success'));
         cancelEdit(); 
         loadLLMs();   
     }
@@ -183,7 +183,7 @@ async function handleDeleteLLM() {
     const id = document.getElementById('form_id').value;
     if (!id) return;
 
-    if (!confirm("Bạn có chắc chắn muốn xóa cấu hình LLM này không?")) return;
+    if (!confirm(mnI18n.t('llm.delete_confirm'))) return;
 
     const result = await apiClient.apiDelete(`/llms/${id}`);
     if (result) {

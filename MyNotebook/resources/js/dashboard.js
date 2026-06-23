@@ -1,9 +1,14 @@
 // ==========================================
-// 1. KHỞI TẠO AN TOÀN TRONG MEDIAWIKI
+// 1. SAFE INITIALIZATION IN MEDIAWIKI
 // ==========================================
 function initDashboard() {
     const gridContainer = document.getElementById('notebook-grid');
     if (!gridContainer) return; 
+
+    const langToggle = document.getElementById('ws_lang_toggle');
+    if (langToggle) {
+        langToggle.addEventListener('click', toggleDashboardLanguage);
+    }
 
     loadNotebooks();
 }
@@ -15,44 +20,44 @@ if (document.readyState === "loading") {
 }
 
 // ==========================================
-// 2. TẢI DANH SÁCH SỔ TAY
+// 2. LOAD NOTEBOOK LIST
 // ==========================================
 async function loadNotebooks() {
     const gridContainer = document.getElementById('notebook-grid');
     const userId = apiClient.getUserId();
     const specialPageUrl = mw.config.get('MyNotebookBaseUrl');
 
-    // 1. Lấy dữ liệu từ FastAPI
+    // 1. Get data from FastAPI
     const notebooks = await apiClient.apiGet(`/notebooks/user/${userId}`);
 
     if (!notebooks) {
-        gridContainer.innerHTML = "<p style='color: red;'>Lỗi kết nối đến máy chủ.</p>";
+        gridContainer.innerHTML = `<p style='color: red;'>${mnI18n.t('dashboard.error_connection')}</p>`;
         return;
     }
 
-    gridContainer.innerHTML = ""; // Xóa chữ "Đang tải..."
+    gridContainer.innerHTML = ""; // Clear the "Loading..." text
 
-    // 2. Nút "Tạo mới" cũng được làm lại tông trắng/viền xám
+    // 2. The "Create new" button is also restyled with a white tone/gray border
     const createNode = document.createElement('div');
     createNode.style.cssText = "border: 2px dashed #7F7F7F; border-radius: 12px; min-height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; background: #ffffff; transition: all 0.2s; box-sizing: border-box;";
     createNode.innerHTML = `
         <div style='font-size: 36px; color: #187A35; margin-bottom: 8px; line-height: 1;'><i class="fas fa-plus-circle"></i></div>
-        <div style='color: #7F7F7F; font-weight: bold; font-size: 14px;'>Tạo sổ tay</div>
+        <div style='color: #7F7F7F; font-weight: bold; font-size: 14px;'>${mnI18n.t('dashboard.create_notebook')}</div>
     `;
     createNode.onmouseover = () => { createNode.style.borderColor = "#187A35"; createNode.style.boxShadow = "0 4px 10px rgba(43,127,255,0.1)"; };
     createNode.onmouseout = () => { createNode.style.borderColor = "#7F7F7F"; createNode.style.boxShadow = "none"; };
     createNode.onclick = createNewNotebook;
     gridContainer.appendChild(createNode);
 
-    // 3. Vẽ các Node Notebook có sẵn
+    // 3. Render existing notebook nodes
     notebooks.forEach(nb => {
         const nbCard = document.createElement('a');
         nbCard.href = `${specialPageUrl}?action=workspace&id=${nb.id}`;
         
-        // CSS Card: Nền trắng, viền xám đậm #7F7F7F
+        // CSS Card: White background, dark gray border #7F7F7F
         nbCard.style.cssText = `border: 1px solid #7F7F7F; border-radius: 12px; min-height: 140px; padding: 20px; cursor: pointer; background: #ffffff; text-decoration: none; display: flex; flex-direction: column; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; box-sizing: border-box;`;
         
-        // Hiệu ứng hover nhô lên và sáng viền xanh
+        // Hover effect lifts the card and highlights the green border
         nbCard.onmouseover = () => { nbCard.style.transform = "translateY(-4px)"; nbCard.style.boxShadow = "0 6px 15px rgba(0,0,0,0.08)"; nbCard.style.borderColor = "#187A35"; };
         nbCard.onmouseout = () => { nbCard.style.transform = "translateY(0)"; nbCard.style.boxShadow = "none"; nbCard.style.borderColor = "#7F7F7F"; };
 
@@ -63,7 +68,7 @@ async function loadNotebooks() {
             <div style='display: flex; align-items: center; margin-bottom: 15px;'>
             
                 <div style='background: #187A35; color: #ffffff; padding: 3px 12px; border-radius: 20px; font-size: 13px; font-weight: bold;'>
-                    ${sourceCount} nguồn
+                    ${mnI18n.t('dashboard.sources_count', { count: sourceCount })}
                 </div>
                 
                 <div style='margin-left: auto; font-size: 13px; color: #7F7F7F; font-weight: 600;'>
@@ -83,12 +88,12 @@ async function loadNotebooks() {
 }
 
 // ==========================================
-// 3. TẠO SỔ TAY MỚI
+// 3. CREATE NEW NOTEBOOK
 // ==========================================
 async function createNewNotebook() {
-    const name = prompt("Vui lòng nhập tên cho Sổ tay mới:");
+    const name = prompt(mnI18n.t('dashboard.prompt_new_notebook'));
     
-    // Nếu người dùng bấm Cancel hoặc để trống
+    // If the user clicks Cancel or leaves it blank
     if (!name || name.trim() === "") return;
 
     const payload = {
@@ -96,11 +101,22 @@ async function createNewNotebook() {
         user_id: apiClient.getUserId()
     };
 
-    // Giả định API tạo notebook của bạn là POST /notebooks/
+    // Assume your notebook creation API is POST /notebooks/
     const result = await apiClient.apiPost(`/notebooks/`, payload);
 
     if (result) {
-        // Tạo thành công -> Tải lại danh sách để thấy Sổ tay mới
+        // Created successfully -> reload the list to show the new notebook
         loadNotebooks();
     }
+}
+
+function toggleDashboardLanguage() {
+    const currentLang = (mw.config.get('MyNotebookLang') || 'en').toLowerCase();
+    const nextLang = currentLang === 'vi' ? 'en' : 'vi';
+
+    document.cookie = `mn_lang=${nextLang}; path=/; max-age=31536000`;
+
+    const url = new URL(window.location.href);
+    url.searchParams.set('lang', nextLang);
+    window.location.href = url.toString();
 }

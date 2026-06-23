@@ -8,7 +8,7 @@ const apiClient = {
         // Chỉ cài đặt nếu chưa có, tránh ghi đè dữ liệu cũ
         if (!localStorage.getItem('mn_user_id')) {
             localStorage.setItem('mn_user_id', defaultId);
-            console.log("Đã khởi tạo User ID trong LocalStorage:", defaultId);
+            console.log("Initialized User ID in LocalStorage:", defaultId);
         }
     },
 
@@ -53,15 +53,15 @@ const apiClient = {
             // Xử lý lỗi HTTP (VD: 400, 404, 500)
             if (!response.ok) {
                 const errorData = await response.json();
-                const errorMsg = errorData.detail || `Lỗi máy chủ (${response.status})`;
+                const errorMsg = errorData.detail || mnI18n.t('api.error_server', { status: response.status });
                 throw new Error(errorMsg);
             }
             
             return await response.json();
         } catch (error) {
             console.error(`[API Error] ${method} ${endpoint}:`, error.message);
-            // Có thể dùng một thư viện Toast để báo lỗi đẹp hơn, tạm dùng alert
-            alert("Lỗi: " + error.message); 
+            // Could use a Toast library for nicer errors, using alert for now
+            alert(mnI18n.t('common.error_prefix') + error.message); 
             return null; // Trả về null để file gọi dễ dàng check IF
         }
     },
@@ -86,8 +86,8 @@ const apiClient = {
     }
 };
 
-// Tự động kích hoạt hàm lưu user_id=0 ngay khi file này được load
-// Đây là cách tiện nhất để không phải viết thêm script vào PHP
+// Auto-run the user_id=0 initialization as soon as this file loads
+// This is the easiest way to avoid adding extra script to PHP
 apiClient.initUserId(0);
 
 const formatTime = (totalSeconds) => {

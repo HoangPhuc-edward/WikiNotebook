@@ -1,12 +1,12 @@
 // ==========================================
-// 1. KHỞI TẠO AN TOÀN TRONG MEDIAWIKI
+// 1. SAFE INITIALIZATION IN MEDIAWIKI
 // ==========================================
 function initTemplateManager() {
     const listContainer = document.getElementById('template-list-container');
-    if (!listContainer) return; // Thoát nếu không phải trang Template
+    if (!listContainer) return; // Exit if this is not the Template page
 
 
-    // Gắn sự kiện cho các nút
+    // Attach events to buttons
     document.getElementById('btn_add_section').addEventListener('click', () => addTemplateSection());
     document.getElementById('btn_save_template').addEventListener('click', handleSaveTemplate);
     document.getElementById('btn_delete_template').addEventListener('click', handleDeleteTemplate);
@@ -19,10 +19,10 @@ function initTemplateManager() {
     }
     });
 
-    // Mặc định tạo ra 1 mục trống khi vừa vào trang
+    // Create one empty item by default when entering the page
     addTemplateSection();
     
-    // Tải danh sách
+    // Load list
     loadTemplates();
 }
 
@@ -33,17 +33,17 @@ if (document.readyState === "loading") {
 }
 
 // ==========================================
-// 2. HÀM QUẢN LÝ CÁC MỤC ĐỘNG (DYNAMIC FORM)
+// 2. FUNCTIONS FOR MANAGING DYNAMIC ITEMS (DYNAMIC FORM)
 // ==========================================
 function addTemplateSection(titleVal = '', descVal = '') {
     const container = document.getElementById('prompt_structure_container');
     
-    // Tạo một khối bọc (Wrapper) cho 1 mục
+    // Create a wrapper block for one item
     const sectionDiv = document.createElement('div');
     sectionDiv.className = 'template-section-item';
     sectionDiv.style.cssText = "background: #ffffff; border: 1px solid #cbd5e1; padding: 10px; border-radius: 6px; position: relative;";
     
-    // Nút Xóa mục này
+    // Button to delete this item
     const removeBtn = document.createElement('button');
     removeBtn.innerHTML = '✕';
     removeBtn.style.cssText = "position: absolute; top: 5px; right: 5px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 10px; display: flex; align-items: center; justify-content: center;";
@@ -51,13 +51,13 @@ function addTemplateSection(titleVal = '', descVal = '') {
         container.removeChild(sectionDiv);
     };
 
-    // Nội dung: Tiêu đề và Miêu tả
+    // Content: Title and description
     const contentHtml = `
         <div style="margin-bottom: 8px;">
-            <input type="text" class="section-title" placeholder="Tiêu đề (VD: Giới thiệu chung)" value="${titleVal}" style="width: 90%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px;">
+            <input type="text" class="section-title" placeholder="${mnI18n.t('template.title_placeholder')}" value="${titleVal}" style="width: 90%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px;">
         </div>
         <div>
-            <textarea class="section-desc" placeholder="Miêu tả nội dung AI cần viết..." rows="2" style="width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; resize: vertical;">${descVal}</textarea>
+            <textarea class="section-desc" placeholder="${mnI18n.t('template.description_placeholder')}" rows="2" style="width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; resize: vertical;">${descVal}</textarea>
         </div>
     `;
     
@@ -66,7 +66,7 @@ function addTemplateSection(titleVal = '', descVal = '') {
     container.appendChild(sectionDiv);
 }
 
-// Hàm quét toàn bộ form để gom thành JSON mảng
+// Scan the entire form and collect it into a JSON array
 function getPromptStructureData() {
     const sections = document.querySelectorAll('.template-section-item');
     let structureArray = [];
@@ -75,7 +75,7 @@ function getPromptStructureData() {
         const title = section.querySelector('.section-title').value.trim();
         const desc = section.querySelector('.section-desc').value.trim();
         
-        // Chỉ lấy những mục có điền tiêu đề
+        // Only get items with a title entered
         if (title !== '') {
             structureArray.push({ title: title, description: desc });
         }
@@ -85,40 +85,40 @@ function getPromptStructureData() {
 }
 
 // ==========================================
-// 3. API VÀ LOGIC GIAO DIỆN (STATE)
+// 3. API AND UI LOGIC (STATE)
 // ==========================================
 
 window.allTemplates = [];
 
-// Biến toàn cục để lưu trữ danh sách gốc
+// Global variable to store the original list
 window.allTemplates = [];
 
 async function loadTemplates() {
     const listContainer = document.getElementById('template-list-container');
-    listContainer.innerHTML = "<p style='color: #666;'><i class='fas fa-spinner fa-spin'></i> Đang tải dữ liệu...</p>";
+    listContainer.innerHTML = `<p style='color: #666;'><i class='fas fa-spinner fa-spin'></i> ${mnI18n.t('template.loading')}</p>`;
 
     const userId = apiClient.getUserId();
     const data = await apiClient.apiGet(`/templates/${userId}`);
 
     if (!data) {
-        listContainer.innerHTML = "<p style='color: red;'>Lỗi khi tải danh sách Template.</p>";
+        listContainer.innerHTML = `<p style='color: red;'>${mnI18n.t('template.error_loading_list')}</p>`;
         return;
     }
 
-    // Lưu dữ liệu vào biến toàn cục để phục vụ hàm filter sau này
+    // Save data to the global variable for the filter function later
     window.allTemplates = data; 
     
-    // Gọi hàm render để hiển thị lần đầu
+    // Call the render function for the first display
     renderTemplates(window.allTemplates);
 }
 
-// Hàm bổ trợ: Vẽ danh sách Template ra màn hình
+// Helper function: Render the Template list on screen
 function renderTemplates(templates) {
     const listContainer = document.getElementById('template-list-container');
     listContainer.innerHTML = "";
 
     if (templates.length === 0) {
-        listContainer.innerHTML = "<p style='color: #64748b; font-style: italic; padding: 10px;'>Không tìm thấy template nào phù hợp.</p>";
+        listContainer.innerHTML = `<p style='color: #64748b; font-style: italic; padding: 10px;'>${mnI18n.t('template.no_match')}</p>`;
         return;
     }
 
@@ -133,7 +133,7 @@ function renderTemplates(templates) {
 
         div.innerHTML = `
             <strong style='font-size: 15px; color: #0f172a;'>${tpl.name}</strong><br>
-            <span style='font-size: 13px; color: #64748b;'>Gồm ${sectionCount} mục nội dung</span>
+            <span style='font-size: 13px; color: #64748b;'>${mnI18n.t('template.items_included', { count: sectionCount })}</span>
         `;
 
         div.onclick = () => selectTemplate(tpl);
@@ -141,16 +141,16 @@ function renderTemplates(templates) {
     });
 }
 
-// Hàm xử lý tìm kiếm (Kích hoạt mỗi khi gõ phím)
+// Search handler function (Triggered whenever a key is typed)
 function filterTemplates() {
     const keyword = document.getElementById('search_input').value.toLowerCase().trim();
     
-    // Lọc mảng dữ liệu dựa trên tên (name) của template
+    // Filter the data array based on the template name
     const filtered = window.allTemplates.filter(tpl => 
         tpl.name.toLowerCase().includes(keyword)
     );
 
-    // Vẽ lại danh sách đã lọc
+    // Re-render the filtered list
     renderTemplates(filtered);
 }
 
@@ -158,23 +158,23 @@ function selectTemplate(tpl) {
     document.getElementById('form_template_id').value = tpl.id;
     document.getElementById('form_template_name').value = tpl.name;
 
-    // Xóa trắng danh sách mục hiện tại
+    // Clear the current item list
     const container = document.getElementById('prompt_structure_container');
     container.innerHTML = '';
 
-    // Đổ dữ liệu từ mảng JSON ra các Form nhỏ
+    // Populate small forms from the JSON array
     if (Array.isArray(tpl.prompt_structure) && tpl.prompt_structure.length > 0) {
         tpl.prompt_structure.forEach(item => {
             addTemplateSection(item.title, item.description);
         });
     } else {
-        // Nếu không có mục nào, tạo 1 mục trống
+        // If there are no items, create one empty item
         addTemplateSection();
     }
 
-    // Đổi trạng thái giao diện sang "Sửa"
-    document.getElementById('form-title').innerText = "Cập nhật Template: " + tpl.name;
-    document.getElementById('btn_save_template').innerText = "Cập nhật";
+    // Change the UI state to "Edit"
+    document.getElementById('form-title').innerText = mnI18n.t('template.update_title', { name: tpl.name });
+    document.getElementById('btn_save_template').innerText = mnI18n.t('template.update_button');
     toggleTemplateButtons(false);
 }
 
@@ -182,13 +182,13 @@ function cancelTemplateEdit() {
     document.getElementById('form_template_id').value = '';
     document.getElementById('form_template_name').value = '';
 
-    // Trả lại 1 mục trống duy nhất
+    // Restore one single empty item
     const container = document.getElementById('prompt_structure_container');
     container.innerHTML = '';
     addTemplateSection();
 
-    document.getElementById('form-title').innerText = "Thêm Template mới";
-    document.getElementById('btn_save_template').innerText = "Thêm mới";
+    document.getElementById('form-title').innerText = mnI18n.t('template.create_title');
+    document.getElementById('btn_save_template').innerText = mnI18n.t('template.add_button');
     toggleTemplateButtons(true);
 }
 
@@ -206,22 +206,22 @@ function toggleTemplateButtons(isDisabled) {
 }
 
 // ==========================================
-// 4. LƯU (THÊM / SỬA)
+// 4. SAVE (ADD / EDIT)
 // ==========================================
 async function handleSaveTemplate() {
     const id = document.getElementById('form_template_id').value;
     const name = document.getElementById('form_template_name').value.trim();
     
-    // Kêu gọi hàm gom dữ liệu JSON
+    // Call the function that collects JSON data
     const structureData = getPromptStructureData();
 
     if (name === '') {
-        alert("Vui lòng nhập Tên Template!");
+        alert(mnI18n.t('template.enter_name_alert'));
         return;
     }
 
     if (structureData.length === 0) {
-        alert("Vui lòng nhập ít nhất một mục Tiêu đề cho Template!");
+        alert(mnI18n.t('template.enter_title_alert'));
         return;
     }
 
@@ -233,36 +233,36 @@ async function handleSaveTemplate() {
 
     let result;
     if (id) {
-        // API PUT (Sửa) - Tôi đang placeholder, bạn có thể gọi backend khi sẵn sàng
+        // API PUT (Edit) - This is currently a placeholder; you can call the backend when ready
         result = await apiClient.apiPut(`/templates/${id}`, payload);
         if (!result) {
-            alert("Lỗi khi cập nhật Template. Vui lòng thử lại.");
+            alert(mnI18n.t('template.update_failed'));
         }
         else {
-            alert("Cập nhật thành công!");
+            alert(mnI18n.t('template.save_updated_success'));
         }
         return;
     } else {
-        // API POST (Thêm mới)
+        // API POST (Add new)
         result = await apiClient.apiPost(`/templates`, payload);
     }
 
     if (result) {
-        alert(id ? "Cập nhật thành công!" : "Thêm Template thành công!");
+        alert(id ? mnI18n.t('template.save_updated_success') : mnI18n.t('template.save_success'));
         cancelTemplateEdit(); 
         loadTemplates();   
     }
 }
 
-// Placeholder cho Xóa
+// Placeholder for Delete
 async function handleDeleteTemplate() {
     const id = document.getElementById('form_template_id').value;
     if (!id) return;
 
-    if (!confirm("Tính năng Xóa đang xây dựng ở Backend. Bạn có muốn gọi thử không?")) return;
+    if (!confirm(mnI18n.t('template.delete_confirm'))) return;
     
     const result = await apiClient.apiDelete(`/templates/${id}`);
     if (result) { 
-        alert("Xóa thành công!");
+        alert(mnI18n.t('template.delete_success'));
         cancelTemplateEdit(); loadTemplates(); }
 }

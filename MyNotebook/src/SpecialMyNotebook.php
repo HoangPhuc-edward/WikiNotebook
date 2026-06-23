@@ -2,6 +2,7 @@
 namespace MyNotebook;
 
 use SpecialPage;
+use MyNotebook\I18n;
 
 class SpecialMyNotebook extends SpecialPage {
     public function __construct() {
@@ -13,30 +14,35 @@ class SpecialMyNotebook extends SpecialPage {
         $request = $this->getRequest();
         $output = $this->getOutput();
 
-        // Đưa URL API vào JavaScript để các script có thể sử dụng
+        $locale = $request->getVal( 'lang', $_COOKIE['mn_lang'] ?? 'en' );
+        I18n::setLocale( $locale );
+
+        // Pass the API URL into JavaScript so scripts can use it
         global $wgMyNotebookApiUrl;
         $output->addJsConfigVars( 'MyNotebookApiUrl', $wgMyNotebookApiUrl );
+        $output->addJsConfigVars( 'MyNotebookLang', I18n::getLocale() );
+        $output->addJsConfigVars( 'MyNotebookMessages', I18n::all() );
         $output->addModules( 'ext.myNotebook.scripts' );
 
-        // Tiêu đề chung cho toàn bộ Extension
-        $output->setPageTitle( "Sổ tay nông nghiệp" );
+        // Common title for the entire Extension
+        $output->setPageTitle( I18n::msg( 'dashboard.notebook_list' ) );
 
         // ---------------------------------------------------------
-        // GHI ĐÈ CSS CỦA MEDIAWIKI ĐỂ MỞ RỘNG GIAO DIỆN FULL MÀN HÌNH
+        // OVERRIDE MEDIAWIKI CSS TO EXPAND THE INTERFACE TO FULL SCREEN
         // ---------------------------------------------------------
         $output->addInlineStyle('
-            /* Phá vỡ lớp bọc ngoài cùng mà bạn vừa tìm thấy */
+            /* Break the outermost wrapper you just found */
             main#content.mw-body {
-                display: block !important; /* Chìa khóa để phá lưới */
+                display: block !important; /* Key to breaking the grid */
                 max-width: 100% !important;
-                padding: 20px 25px !important; /* Tạo lề ngoài cùng cho đẹp */
+                padding: 20px 25px !important; /* Create a nice outer margin */
             }
 
             .firstHeading.mw-first-heading {
                 font-size: 28px;
             }
 
-            /* 2. Ép tất cả các lớp bọc ngoài cùng bung rộng 100% */
+            /* 2. Force all outer wrappers to expand to 100% width */
             .mw-page-container,
             .mw-page-container-inner,
             .mw-content-container {
@@ -45,17 +51,17 @@ class SpecialMyNotebook extends SpecialPage {
                 padding-right: 0 !important;
             }
 
-            /* 3. Ẩn hẳn cột chứa các công cụ linh tinh bên tay phải (nếu có) */
+            /* 3. Hide the column containing miscellaneous tools on the right (if any) */
             .vector-column-end {
                 display: none !important;
             }
         ');;
 
-        // Đọc tham số 'action' trên URL (Mặc định là 'dashboard')
+        // Read the 'action' parameter from the URL (Default is 'dashboard')
         $action = $request->getVal( 'action', 'dashboard' );
 
-        // Dựa vào action để gọi class tương ứng trong thư mục Pages
-        // Đã sắp xếp lại 'default' xuống cuối để code an toàn và chuẩn xác hơn
+        // Use the action to call the corresponding class in the Pages directory
+        // Moved 'default' to the end to make the code safer and more accurate
         switch ( $action ) {
             case 'workspace':
                 $notebookId = $request->getInt( 'id', 0 );

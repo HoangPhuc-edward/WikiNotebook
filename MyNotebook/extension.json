@@ -21,6 +21,7 @@
     "ResourceModules": {
         "ext.myNotebook.scripts": {
             "scripts": [
+                "resources/js/i18n.js",
                 "resources/js/api_client.js",
                 "resources/js/llm_manager.js",
                 "resources/js/template_manager.js",

@@ -1,15 +1,18 @@
 <?php
 namespace MyNotebook\Pages;
 
+use MyNotebook\I18n;
+
 class DashboardPage {
     public function render( $output ) {
-        // Tạo URL an toàn của MediaWiki
+        // Create a safe MediaWiki URL
         $specialPageUrl = \SpecialPage::getTitleFor( 'MyNotebook' )->getFullURL();
         $llmManagerUrl = \SpecialPage::getTitleFor( 'MyNotebook' )->getFullURL( [ 'action' => 'llm_manager' ] );
         $templateManagerUrl = \SpecialPage::getTitleFor( 'MyNotebook' )->getFullURL( [ 'action' => 'template_manager' ] );
         $sourceManagerUrl = \SpecialPage::getTitleFor( 'MyNotebook' )->getFullURL( [ 'action' => 'source_manager' ] );
+        $lang = I18n::getLocale();
         
-        // Truyền Base URL của trang Special xuống JS
+        // Pass the Special page Base URL down to JS
         $output->addJsConfigVars( 'MyNotebookBaseUrl', $specialPageUrl );
 
         $html = "
@@ -50,10 +53,10 @@ class DashboardPage {
                     color: #ffffff !important;
                 }
                 
-                /* 3 & 4. Xử lý font chữ và đường kẻ ngang mặc định của thẻ H2 MediaWiki */
+                /* 3 & 4. Handle MediaWiki H2 default font and horizontal rule */
                 h2.ws-dashboard-title {
-                    font-family: sans-serif !important; /* Ép font không chân */
-                    border-bottom: none !important; /* Xóa đường kẻ ngang khó chịu */
+                    font-family: sans-serif !important; /* Force sans-serif font */
+                    border-bottom: none !important; /* Remove the annoying horizontal rule */
                     margin: 0 0 20px 0 !important; 
                     color: #1e293b !important; 
                     text-align: left; 
@@ -66,17 +69,20 @@ class DashboardPage {
                 <div style='display: flex; gap: 15px; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 25px; flex-wrap: wrap;'>
                     
                     <a href='{$templateManagerUrl}' class='ws-btn-outline'>
-                        <i class='fas fa-file-code'></i> Cài đặt dàn ý
+                        <i class='fas fa-file-code'></i> " . I18n::msg( 'dashboard.outline_settings' ) . "
                     </a>
                     <a href='{$sourceManagerUrl}' class='ws-btn-outline'>
-                        <i class='fas fa-database'></i> Cài đặt nguồn
+                        <i class='fas fa-database'></i> " . I18n::msg( 'dashboard.source_settings' ) . "
                     </a>
+                    <button type='button' id='ws_lang_toggle' class='ws-btn-outline' style='border-radius: 25px; background: #ffffff;'>
+                        <i class='fas fa-language'></i> " . strtoupper( $lang ) . "
+                    </button>
                 </div>
 
-                <h2 class='ws-dashboard-title'>Danh sách sổ tay</h2>
+                <h2 class='ws-dashboard-title'>" . I18n::msg( 'dashboard.notebook_list' ) . "</h2>
 
                 <div id='notebook-grid' style='display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 20px; margin-right: 40px;'>
-                    <p style='color: #666;'>Đang tải dữ liệu...</p>
+                    <p style='color: #666;'>" . I18n::msg( 'common.loading_data' ) . "</p>
                 </div>
 
             </div>

@@ -71,6 +71,21 @@ if (document.readyState === "loading") {
     initWorkspace();
 }
 
+// Hàm show/hide modal loading
+function showLoadingModal() {
+    const modal = document.getElementById('ws_loading_modal');
+    if (modal) {
+        modal.style.display = 'flex';
+    }
+}
+
+function hideLoadingModal() {
+    const modal = document.getElementById('ws_loading_modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
 async function loadNotebookDetails() {
     const data = await apiClient.apiGet(`/notebooks/${window.nbId}`);
     if (!data) return;
@@ -126,7 +141,7 @@ async function loadNotebookDetails() {
             typeBadge.style.borderRadius = "12px"; // Bo góc cong
             typeBadge.style.fontSize = "12px";
             typeBadge.style.fontWeight = "500";
-            typeBadge.innerText = src.type || "N/A"; // Fallback nếu không có type
+            typeBadge.innerText = src.type || mnI18n.t('common.na');
 
             // Lắp ráp các thành phần
             badgeContainer.appendChild(statusBadge);
@@ -138,7 +153,7 @@ async function loadNotebookDetails() {
             list.appendChild(card);
         });
     } else {
-        list.innerHTML = "<p style='color: #64748b; font-style: italic;'>Chưa có nguồn</p>";
+        list.innerHTML = `<p style='color: #64748b; font-style: italic;'>${mnI18n.t('workspace.no_sources')}</p>`;
     }
 }
 
@@ -209,10 +224,10 @@ async function loadArticle() {
                 editFormHtml += `
                     <div class="ws-edit-row" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 10px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <input type="text" class="ws-edit-title" value="${sectionTitle}" placeholder="Tiêu đề mục..." 
+                            <input type="text" class="ws-edit-title" value="${sectionTitle}" placeholder="${mnI18n.t('workspace.section_title_placeholder')}" 
                                    style="width: 70%; font-weight: bold; border: 1px solid #cbd5e1; border-radius: 4px; padding: 6px;">
                             <span style="font-size: 12px; color: #64748b; background: #fff; padding: 2px 8px; border-radius: 10px; border: 1px solid #e2e8f0;">
-                                Nguồn: ${citeLabel || 'Không có'}
+                                ${mnI18n.t('workspace.source_label')} ${citeLabel || mnI18n.t('workspace.no_source_label')}
                             </span>
                         </div>
                         <textarea class="ws-edit-content" rows="3" style="width: 100%; border: 1px solid #cbd5e1; border-radius: 4px; padding: 8px; font-size: 14px; resize: vertical;">${sectionContent}</textarea>
@@ -238,7 +253,7 @@ async function loadArticle() {
 
         // 3. Xử lý Bibliography & Sources (Chỉ hiển thị bên View)
         if (article.bibliography && article.bibliography.length > 0) {
-            htmlContent += `<br><hr><strong style="display: block; margin-top: 15px; font-size: 1.1em;">Tham khảo</strong>`;
+            htmlContent += `<br><hr><strong style="display: block; margin-top: 15px; font-size: 1.1em;">${mnI18n.t('workspace.reference_title')}</strong>`;
             if (!window.sourceCache) window.sourceCache = {};
             const uniqueSources = new Set();
             let index = 1;
@@ -246,23 +261,21 @@ async function loadArticle() {
 
             for (const bib of article.bibliography) {
                 const sourceId = bib.locator?.source_id;
-                let sourceTitle = "Nguồn không xác định";
+                let sourceTitle = mnI18n.t('workspace.unknown_source');
                 let sourceObj = null;
 
                 if (sourceId) {
                     if (!sourceCache[sourceId]) {
                         const sourceData = await apiClient.apiGet(`/sources/${sourceId}`);
-                        // sourceCache[sourceId] = sourceData ? sourceData.title : "Nguồn đã bị xóa";
-                        sourceCache[sourceId] = sourceData;
-                    }
-
-                    // sourceTitle = sourceCache[sourceId];
-                    sourceObj = sourceCache[sourceId];
-                    sourceTitle = sourceObj ? (sourceObj.title || "Nguồn không tiêu đề") : "Nguồn đã bị xóa";
-                    if (sourceTitle !== "Nguồn đã bị xóa") uniqueSources.add(sourceTitle);
+                    sourceCache[sourceId] = sourceData;
                 }
 
-                if (sourceTitle !== "Nguồn không xác định" && sourceTitle !== "Nguồn đã bị xóa") {
+                    sourceObj = sourceCache[sourceId];
+                    sourceTitle = sourceObj ? (sourceObj.title || mnI18n.t('workspace.untitled_source')) : mnI18n.t('workspace.deleted_source');
+                    if (sourceTitle !== mnI18n.t('workspace.deleted_source')) uniqueSources.add(sourceTitle);
+                }
+
+                if (sourceTitle !== mnI18n.t('workspace.unknown_source') && sourceTitle !== mnI18n.t('workspace.deleted_source')) {
                     uniqueSources.add(sourceTitle);
                 }
 
@@ -289,11 +302,11 @@ async function loadArticle() {
                             
                             break;
                         case 'docx':
-                            locationStr = ` - Đoạn thứ: ${bib.locator.block_index ?? 'N/A'}`;
+                            locationStr = ` - ${mnI18n.t('source.segment_number', { index: bib.locator.block_index ?? mnI18n.t('common.na') })}`;
                             break;
 
                         case 'pdf':
-                            locationStr = ` - Trang thứ: ${bib.locator.page_number ?? 'N/A'}`;
+                            locationStr = ` - ${mnI18n.t('source.page_number', { index: bib.locator.page_number ?? mnI18n.t('common.na') })}`;
                             break;
 
                         case 'audio':
@@ -303,7 +316,7 @@ async function loadArticle() {
                             const endSec = bib.locator.end_seconds ?? 0;
                             const startVal = formatTime(startSec)
                             const endVal = formatTime(endSec)
-                            locationStr = `- Thời điểm: ${startVal} - ${endVal}`;
+                            locationStr = `- ${mnI18n.t('source.time_range', { start: startVal, end: endVal })}`;
                             break;
 
                         default:
@@ -315,7 +328,7 @@ async function loadArticle() {
                 htmlContent += `<div style="font-size: 13px; margin-top: 4px; color: #475569;">[${bib.id}] - ${sourceTitle}${locationStr}</div>`;
             }
             if (uniqueSources.size > 0) {
-                htmlContent += `<br><strong style="display: block; margin-top: 15px; font-size: 1.1em;">Nguồn</strong>`;
+                htmlContent += `<br><strong style="display: block; margin-top: 15px; font-size: 1.1em;">${mnI18n.t('workspace.sources_title')}</strong>`;
                 
                 uniqueSources.forEach(sourceName => {
                     htmlContent += `<div style="margin-top: 5px;">${sourceName}</div>`;
@@ -331,7 +344,7 @@ async function loadArticle() {
 
     } else {
         window.currentArticle = null;
-        view.innerHTML = "<p style='color: #666; font-style: italic;'>Chưa có bài viết.</p>";
+        view.innerHTML = `<p style='color: #666; font-style: italic;'>${mnI18n.t('workspace.no_article')}</p>`;
         editContainer.innerHTML = "";
     }
 }
@@ -397,7 +410,7 @@ async function openSourceDetailModal(source_id, chunk_idx = "") {
         loading.style.display = 'none';
 
         if (!chunks || chunks.length === 0) {
-            container.innerHTML = '<p style="color: #64748b; text-align: center; font-size: 14px;">Không có nội dung cho nguồn này.</p>';
+            container.innerHTML = `<p style="color: #64748b; text-align: center; font-size: 14px;">${mnI18n.t('workspace.no_excerpt_content')}</p>`;
             return;
         }
 
@@ -411,23 +424,23 @@ async function openSourceDetailModal(source_id, chunk_idx = "") {
             chunkDiv.style.transition = 'all 0.2s ease';
 
             const meta = chunk.meta_data || {};
-            const sourceType = meta.source_type || 'Không xác định';
+            const sourceType = meta.source_type || mnI18n.t('common.unknown');
             let locationStr = '';
             let startSec = 0;
 
             switch (sourceType) {
                 case 'docx':
-                    locationStr = ` - Đoạn thứ: ${meta.block_index ?? 'N/A'}`; 
+                    locationStr = ` - ${mnI18n.t('source.segment_number', { index: meta.block_index ?? mnI18n.t('common.na') })}`; 
                     break;
                 case 'pdf':
-                    locationStr = ` - Trang thứ: ${meta.page_number ?? 'N/A'}`;
+                    locationStr = ` - ${mnI18n.t('source.page_number', { index: meta.page_number ?? mnI18n.t('common.na') })}`;
                     break;
                 case 'audio':
                 case 'youtube':
                 case 'video':
                     startSec = meta.start_seconds ?? 0;
                     const endSec = meta.end_seconds ?? 0;
-                    locationStr = ` - Thời điểm: ${formatTime(startSec)} - ${formatTime(endSec)}`;
+                    locationStr = ` - ${mnI18n.t('source.time_range', { start: formatTime(startSec), end: formatTime(endSec) })}`;
                     
                     chunkDiv.style.cursor = 'pointer';
                     chunkDiv.style.borderLeft = '4px solid #ef4444';
@@ -451,7 +464,7 @@ async function openSourceDetailModal(source_id, chunk_idx = "") {
             const contentHTML = `<div style='font-size: 14px; color: #334155; line-height: 1.6;'>${chunk.content}</div>`;
             
             if (sourceType === 'youtube') {
-                chunkDiv.innerHTML = metaHTML + contentHTML + `<div style="margin-top:8px; font-size:12px; color:#ef4444; font-weight:bold; display:flex; align-items:center; gap:5px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Nhấn để phát video</div>`;
+                chunkDiv.innerHTML = metaHTML + contentHTML + `<div style="margin-top:8px; font-size:12px; color:#ef4444; font-weight:bold; display:flex; align-items:center; gap:5px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> ${mnI18n.t('workspace.play_video_hint')}</div>`;
             } else {
                 chunkDiv.innerHTML = metaHTML + contentHTML;
             }
@@ -470,7 +483,7 @@ async function openSourceDetailModal(source_id, chunk_idx = "") {
 
     } catch (error) {
         loading.style.display = 'none';
-        container.innerHTML = '<p style="color: #ef4444; text-align: center; font-size: 14px;">Đã xảy ra lỗi khi tải dữ liệu.</p>';
+        container.innerHTML = `<p style="color: #ef4444; text-align: center; font-size: 14px;">${mnI18n.t('workspace.connection_error_loading_data')}</p>`;
     }
 }
 
@@ -525,7 +538,7 @@ function setupTooltipEvents() {
             if (window.chunkCache[cacheKey]) {
                 tooltip.innerHTML = window.chunkCache[cacheKey];
             } else {
-                tooltip.innerHTML = "<span style='color: #94a3b8; font-style: italic;'><i class='fa fa-spinner fa-spin'></i> Đang tải dữ liệu gốc...</span>";
+                tooltip.innerHTML = `<span style='color: #94a3b8; font-style: italic;'><i class='fa fa-spinner fa-spin'></i> ${mnI18n.t('common.loading_data')}</span>`;
                 try {
                     // Lấy nội dung đoạn chunk
                     const data = await apiClient.apiGet(`/sources/${sourceId}/chunks/${chunkIndex}`);
@@ -535,29 +548,29 @@ function setupTooltipEvents() {
                     if (!sourceName) {
                         try {
                             const sourceData = await apiClient.apiGet(`/sources/${sourceId}`);
-                            sourceName = sourceData ? sourceData.title : "Nguồn không xác định";
+                            sourceName = sourceData ? sourceData.title : mnI18n.t('workspace.unknown_source');
                             window.sourceCache[sourceId] = { title: sourceName };
                         } catch (err) {
-                            sourceName = "Không thể tải tên nguồn";
+                            sourceName = mnI18n.t('workspace.cannot_load_source_name');
                         }
                     }
 
                     if (data && data.content) {
                         // Nối thêm HTML hiển thị tên nguồn ở dưới cùng
                         const contentHtml = `
-                            <strong style="color: #0f172a; border-bottom: 1px solid #eee; padding-bottom: 5px; display: block; margin-bottom: 5px;">Trích đoạn gốc:</strong>
+                            <strong style="color: #0f172a; border-bottom: 1px solid #eee; padding-bottom: 5px; display: block; margin-bottom: 5px;">${mnI18n.t('workspace.excerpt_title')}</strong>
                             <div style="max-height: 200px; overflow-y: auto; color: #334155;">${data.content}</div>
                             <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #cbd5e1; font-size: 0.9em; color: #475569;">
-                                <strong>Nguồn:</strong> <em>${sourceName}</em>
+                                <strong>${mnI18n.t('workspace.source_label')}</strong> <em>${sourceName}</em>
                             </div>
                         `;
                         window.chunkCache[cacheKey] = contentHtml;
                         tooltip.innerHTML = contentHtml;
                     } else {
-                        tooltip.innerHTML = "<span style='color: #ef4444;'>Không tìm thấy nội dung trích đoạn.</span>";
+                    tooltip.innerHTML = `<span style='color: #ef4444;'>${mnI18n.t('workspace.no_excerpt_content')}</span>`;
                     }
                 } catch (error) {
-                    tooltip.innerHTML = "<span style='color: #ef4444;'>Lỗi kết nối khi tải dữ liệu.</span>";
+                    tooltip.innerHTML = `<span style='color: #ef4444;'>${mnI18n.t('workspace.connection_error_loading_data')}</span>`;
                 }
             }
         });
@@ -590,7 +603,7 @@ async function handleUploadFile() {
     if (!file) return;
 
     const statusDiv = document.getElementById('ws_modal_source_status'); // ID trạng thái trong modal
-    statusDiv.innerText = "Đang trích xuất dữ liệu tệp, vui lòng đợi...";
+    statusDiv.innerText = mnI18n.t('workspace.extracting_file_status');
     
     const formData = new FormData();
     formData.append("file", file);
@@ -604,10 +617,10 @@ async function handleUploadFile() {
             loadNotebookDetails(); // Cập nhật lại list ở ngoài
         } else {
             const errorData = await response.json();
-            alert("Lỗi: " + (errorData.detail || "Không thể xử lý tệp"));
+            alert(mnI18n.t('common.error_prefix') + (errorData.detail || mnI18n.t('workspace.file_processing_error')));
         }
     } catch (error) {
-        alert("Lỗi mạng khi tải tệp lên", error);
+        alert(mnI18n.t('workspace.error_network_upload'));
     }
     statusDiv.innerText = "";
 }
@@ -618,12 +631,12 @@ async function handleAddUrl() {
     const urlValue = urlInput.value.trim();
     
     if (!urlValue) {
-        alert("Vui lòng nhập đường dẫn hợp lệ!");
+        alert(mnI18n.t('workspace.valid_url_required'));
         return;
     }
 
     const statusDiv = document.getElementById('ws_modal_source_status');
-    statusDiv.innerText = "Đang trích xuất nội dung từ URL, vui lòng đợi...";
+    statusDiv.innerText = mnI18n.t('workspace.extracting_url_status');
 
     try {
         const endpoint = `/ai/extract/url/${window.nbId}?url=${encodeURIComponent(urlValue)}`;
@@ -635,7 +648,7 @@ async function handleAddUrl() {
             loadNotebookDetails(); 
         }
     } catch (error) {
-        console.error("Lỗi trích xuất URL:", error);
+        console.error(mnI18n.t('workspace.url_extraction_error'), error);
     }
     statusDiv.innerText = "";
 }
@@ -655,7 +668,7 @@ async function openTemplateModal() {
     if (typeof wsAddTemplateSection === "function") wsAddTemplateSection(); 
     
     const listContainer = document.getElementById('ws_tpl_list_container');
-    listContainer.innerHTML = "<p style='color: #64748b; font-size: 14px; font-style: italic;'>Đang tải dữ liệu...</p>";
+    listContainer.innerHTML = `<p style='color: #64748b; font-size: 14px; font-style: italic;'>${mnI18n.t('common.loading_data')}</p>`;
     
     const userId = apiClient.getUserId();
     const data = await apiClient.apiGet(`/templates/${userId}`);
@@ -687,14 +700,14 @@ function renderWorkspaceTemplateList(templates) {
             const sectionCount = Array.isArray(tpl.prompt_structure) ? tpl.prompt_structure.length : 0;
             div.innerHTML = `
                 <strong style='font-size: 14px; color: #0f172a; display: block; margin-bottom: 3px;'>${tpl.name}</strong>
-                <span style='font-size: 12px; color: #64748b;'>Gồm ${sectionCount} mục nội dung</span>
+                <span style='font-size: 12px; color: #64748b;'>${mnI18n.t('template.items_included', { count: sectionCount })}</span>
             `;
             
             div.onclick = () => selectTemplateForWorkspace(tpl.id, tpl.name);
             listContainer.appendChild(div);
         });
     } else {
-        listContainer.innerHTML = "<p style='color: #64748b; font-size: 13px; text-align: center; margin-top: 10px;'>Không tìm thấy dàn ý nào.</p>";
+        listContainer.innerHTML = `<p style='color: #64748b; font-size: 13px; text-align: center; margin-top: 10px;'>${mnI18n.t('template.no_match')}</p>`;
     }
 }
 
@@ -743,10 +756,10 @@ function wsAddTemplateSection(title = "", desc = "") {
 
     // Chèn giá trị title và desc vào template string
     sectionDiv.innerHTML = `
-        <input type="text" class="ws-section-title" placeholder="Tiêu đề (VD: Giới thiệu)" 
+        <input type="text" class="ws-section-title" placeholder="${mnI18n.t('workspace.section_title_placeholder')}" 
             value="${title}"
             style="width: 88%; padding: 6px; margin-bottom: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px;">
-        <textarea class="ws-section-desc" placeholder="Miêu tả nội dung..." rows="2" 
+        <textarea class="ws-section-desc" placeholder="${mnI18n.t('workspace.section_description_placeholder')}" rows="2" 
             style="width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; resize: vertical; font-size: 13px;">${desc}</textarea>
     `;
     sectionDiv.appendChild(removeBtn);
@@ -757,7 +770,7 @@ async function handleCreateAndSelectTemplate() {
     const name = document.getElementById('ws_tpl_name').value.trim();
     const editingId = document.getElementById('ws_editing_template_id').value; // Lấy ID đang sửa
 
-    if (!name) { alert("Vui lòng nhập Tên Template!"); return; }
+    if (!name) { alert(mnI18n.t('workspace.template_name_required')); return; }
 
     const sections = document.querySelectorAll('.ws-tpl-section-item');
     let structureArray = [];
@@ -768,7 +781,7 @@ async function handleCreateAndSelectTemplate() {
     });
 
     if (structureArray.length === 0) {
-        alert("Vui lòng nhập ít nhất một mục Tiêu đề!"); return;
+        alert(mnI18n.t('workspace.template_section_required')); return;
     }
 
     const payload = {
@@ -798,7 +811,7 @@ async function handleCreateAndSelectTemplate() {
 
 
         closeTemplateModal();
-        alert("Chọn dàn ý thành công!")
+        alert(mnI18n.t('workspace.template_selected_success'))
         // --- QUAN TRỌNG: Reset ID về rỗng cho lần sau ---
         document.getElementById('ws_editing_template_id').value = "";
         document.getElementById('ws_tpl_name').value = "";
@@ -811,11 +824,12 @@ async function handleGenerate() {
     // Đọc từ thẻ hidden thay vì ô input text cũ
     const tplId = document.getElementById('ws_selected_template_id').value;
     if (!tplId) {
-        alert("Vui lòng bấm 'Chọn Template' trước khi tạo bài viết.");
+        alert(mnI18n.t('workspace.select_template_first'));
         return;
     }
 
-    document.getElementById('ws_status_text').innerText = "AI đang phân tích và viết bài...";
+    showLoadingModal();
+    document.getElementById('ws_status_text').innerText = mnI18n.t('workspace.ai_writing_status');
     
     const payload = {
         user_id: apiClient.getUserId(),
@@ -823,12 +837,16 @@ async function handleGenerate() {
         topic_name: document.getElementById('ws_notebook_title').innerText
     };
 
-    const result = await apiClient.apiPost(`/ai/generate/${window.nbId}`, payload);
-    
-    if (result) {
-        loadArticle();
+    try {
+        const result = await apiClient.apiPost(`/ai/generate/${window.nbId}`, payload);
+        
+        if (result) {
+            loadArticle();
+        }
+    } finally {
+        hideLoadingModal();
+        document.getElementById('ws_status_text').innerText = "";
     }
-    document.getElementById('ws_status_text').innerText = "";
 }
 
 function toggleEditMode() {
@@ -846,11 +864,11 @@ function toggleEditMode() {
 
 async function handleSaveArticle() {
     if (!window.currentArticle) {
-        alert("Chưa có bài viết nào để lưu!");
+        alert(mnI18n.t('workspace.no_article_to_save'));
         return;
     }
 
-    document.getElementById('ws_status_text').innerText = "Đang lưu...";
+    document.getElementById('ws_status_text').innerText = mnI18n.t('workspace.saving_status');
 
     // 1. Thu thập dữ liệu từ các hàng trong Form Editor
     const rows = document.querySelectorAll('.ws-edit-row');
@@ -916,27 +934,27 @@ async function handleSaveArticle() {
             
             await loadArticle(); 
             
-            alert("Lưu bài viết thành công!");
+            alert(mnI18n.t('workspace.article_save_success'));
         } else {
             const errData = await response.json();
-            alert("Lỗi server: " + (errData.detail || "Không thể cập nhật"));
+            alert(mnI18n.t('workspace.server_error', { detail: errData.detail || mnI18n.t('workspace.save_connection_error') }));
         }
     } catch (error) {
         console.error("Save Error:", error);
-        alert("Lỗi kết nối khi cập nhật bài viết");
+        alert(mnI18n.t('workspace.save_connection_error'));
     }
     
     document.getElementById('ws_status_text').innerText = "";
 }
 
 async function handleDeleteNotebook() {
-    if (!confirm("Bạn có chắc muốn xoá notebook này?")) return; 
+    if (!confirm(mnI18n.t('workspace.delete_confirm'))) return; 
     const result = await apiClient.apiDelete(`/notebooks/${window.nbId}`);
     if (result) {
-        alert("Notebook đã được xoá");
+        alert(mnI18n.t('workspace.deleted_success'));
         window.location.href = mw.util.getUrl('Special:MyNotebook');
     } else {
-        alert("Lỗi khi xoá notebook");
+        alert(mnI18n.t('workspace.delete_error'));
     }  
 }
 
@@ -961,144 +979,152 @@ document.getElementById('custom_modal').addEventListener('click', function(e) {
 
 // Upload wiki 
 async function uploadToWiki() {
-    const notebookData = await apiClient.apiGet(`/notebooks/${window.nbId}`);
-    if (!notebookData) return;
+    showLoadingModal();
+    
+    try {
+        const notebookData = await apiClient.apiGet(`/notebooks/${window.nbId}`);
+        if (!notebookData) {
+            hideLoadingModal();
+            return;
+        }
 
-    const data = await apiClient.apiGet(`/notebooks/${window.nbId}/articles`);
+        const data = await apiClient.apiGet(`/notebooks/${window.nbId}/articles`);
 
-    let article = {};
-    if (data && data.length > 0) {
-        article = data[data.length - 1];
-        window.currentArticle = article; 
-    } else {
-        alert("Chưa có bài viết nào để upload!");
-        return;
-    }
+        let article = {};
+        if (data && data.length > 0) {
+            article = data[data.length - 1];
+            window.currentArticle = article; 
+        } else {
+            alert(mnI18n.t('workspace.no_article_to_upload'));
+            hideLoadingModal();
+            return;
+        }
 
-    const wikiData = {
-        name: notebookData.name || "Chưa xác định", 
-        array_content: [],
-        array_bibliography: [],
-        array_sources: []
-    };
+        const wikiData = {
+            name: notebookData.name || mnI18n.t('workspace.unknown_article_name'), 
+            array_content: [],
+            array_bibliography: [],
+            array_sources: []
+        };
 
-    // --- 1. Trích xuất nội dung bài viết ---
-    function extractContent(nodes) {
-        if (!nodes || nodes.length === 0) return;
-        for (const node of nodes) {
-            if (node.title || node.content) {
-                let citeText = "";
-                if (node.source && Array.isArray(node.source)) {
-                    const sortedSourceList = [...node.source].sort((a, b) => a - b);
-                    citeText = sortedSourceList.map(bibId => `[${bibId}]`).join(' ');
+        // --- 1. Trích xuất nội dung bài viết ---
+        function extractContent(nodes) {
+            if (!nodes || nodes.length === 0) return;
+            for (const node of nodes) {
+                if (node.title || node.content) {
+                    let citeText = "";
+                    if (node.source && Array.isArray(node.source)) {
+                        const sortedSourceList = [...node.source].sort((a, b) => a - b);
+                        citeText = sortedSourceList.map(bibId => `[${bibId}]`).join(' ');
+                    }
+                    wikiData.array_content.push({
+                        title: node.title || "",
+                        content: (node.content || "") + " " + citeText
+                    });
                 }
-                wikiData.array_content.push({
-                    title: node.title || "",
-                    content: (node.content || "") + " " + citeText
-                });
-            }
-            if (node.children && node.children.length > 0) {
-                extractContent(node.children);
+                if (node.children && node.children.length > 0) {
+                    extractContent(node.children);
+                }
             }
         }
-    }
 
-    if (article.final_content && article.final_content.array_content) {
-        extractContent(article.final_content.array_content);
-    }
+        if (article.final_content && article.final_content.array_content) {
+            extractContent(article.final_content.array_content);
+        }
 
-    // --- 2. Trích xuất danh mục tham khảo ---
-    if (article.bibliography && article.bibliography.length > 0) {
-        const uniqueSourcesSet = new Set();
-        if (!window.sourceCache) window.sourceCache = {};
+        // --- 2. Trích xuất danh mục tham khảo ---
+        if (article.bibliography && article.bibliography.length > 0) {
+            const uniqueSourcesSet = new Set();
+            if (!window.sourceCache) window.sourceCache = {};
 
-        for (const bib of article.bibliography) {
-            const locator = bib.locator || {};
-            const sourceId = locator.source_id;
-            const chunkIdx = locator.chunk_index;
-            
-            let sourceTitle = "Nguồn không xác định";
-            let sourceObj = null;
+            for (const bib of article.bibliography) {
+                const locator = bib.locator || {};
+                const sourceId = locator.source_id;
+                const chunkIdx = locator.chunk_index;
+                
+                let sourceTitle = mnI18n.t('workspace.unknown_source');
+                let sourceObj = null;
 
-            if (sourceId) {
-                // Nếu chưa có trong cache thì fetch về
-                if (!window.sourceCache[sourceId]) {
-                    try {
-                        // Lấy toàn bộ source object thay vì chỉ lấy chunk lẻ để đồng bộ với loadArticle
-                        const sourceData = await apiClient.apiGet(`/sources/${sourceId}`);
-                        window.sourceCache[sourceId] = sourceData;
-                    } catch (e) {
-                        window.sourceCache[sourceId] = { title: "Lỗi truy cập nguồn" };
+                if (sourceId) {
+                    // Nếu chưa có trong cache thì fetch về
+                    if (!window.sourceCache[sourceId]) {
+                        try {
+                            // Lấy toàn bộ source object thay vì chỉ lấy chunk lẻ để đồng bộ với loadArticle
+                            const sourceData = await apiClient.apiGet(`/sources/${sourceId}`);
+                            window.sourceCache[sourceId] = sourceData;
+                        } catch (e) {
+                            window.sourceCache[sourceId] = { title: mnI18n.t('workspace.cannot_load_source_name') };
+                        }
+                    }
+                    
+                    // FIX LỖI Ở ĐÂY: Lấy title từ Object trong cache
+                    sourceObj = window.sourceCache[sourceId];
+                    sourceTitle = sourceObj?.title || mnI18n.t('workspace.unknown_source');
+                }
+
+                if (sourceTitle !== mnI18n.t('workspace.unknown_source') && sourceTitle !== mnI18n.t('workspace.deleted_source')) {
+                    uniqueSourcesSet.add(sourceTitle);
+                }
+
+                let locationStr = '';
+                if (sourceId && sourceObj) {
+                    const sourceType = locator.source_type || 'unknown';
+                    switch (sourceType) {
+                        case 'web':
+                            // Tận dụng dữ liệu đã có trong sourceObj để lấy fullText, không cần fetch thêm lần nữa
+                            if (chunkIdx !== undefined && sourceObj.chunks && sourceObj.chunks[chunkIdx]) {
+                                const fullText = (sourceObj.chunks[chunkIdx].content || "").trim();
+                                if (fullText.length > 60) {
+                                    const startText = fullText.substring(0, 30);
+                                    const endText = fullText.substring(fullText.length - 30);
+                                    locationStr = ` ["${startText} ... ${endText}"]`;
+                                } else if (fullText.length > 0) {
+                                    locationStr = ` ["${fullText}"]`;
+                                }
+                            }
+                            break;
+                        case 'docx':
+                            locationStr = ` - ${mnI18n.t('source.segment_number', { index: locator.block_index ?? mnI18n.t('common.na') })}`;
+                            break;
+                        case 'pdf':
+                            locationStr = ` - ${mnI18n.t('source.page_number', { index: locator.page_number ?? mnI18n.t('common.na') })}`;
+                            break;
+                        case 'youtube': case 'video': case 'audio':
+                            const start = formatTime(locator.start_seconds ?? 0);
+                            const end = formatTime(locator.end_seconds ?? 0);
+                            locationStr = ` - ${mnI18n.t('source.time_range', { start, end })}`;
+                            break;
                     }
                 }
-                
-                // FIX LỖI Ở ĐÂY: Lấy title từ Object trong cache
-                sourceObj = window.sourceCache[sourceId];
-                sourceTitle = sourceObj?.title || "Nguồn không xác định";
-            }
 
-            if (sourceTitle !== "Nguồn không xác định" && sourceTitle !== "Nguồn đã bị xóa") {
-                uniqueSourcesSet.add(sourceTitle);
+                // Gửi chuỗi text thuần túy lên Wiki
+                wikiData.array_bibliography.push(`[${bib.id}] - ${sourceTitle}${locationStr}`);
             }
-
-            let locationStr = '';
-            if (sourceId && sourceObj) {
-                const sourceType = locator.source_type || 'unknown';
-                switch (sourceType) {
-                    case 'web':
-                        // Tận dụng dữ liệu đã có trong sourceObj để lấy fullText, không cần fetch thêm lần nữa
-                        if (chunkIdx !== undefined && sourceObj.chunks && sourceObj.chunks[chunkIdx]) {
-                            const fullText = (sourceObj.chunks[chunkIdx].content || "").trim();
-                            if (fullText.length > 60) {
-                                const startText = fullText.substring(0, 30);
-                                const endText = fullText.substring(fullText.length - 30);
-                                locationStr = ` ["${startText} ... ${endText}"]`;
-                            } else if (fullText.length > 0) {
-                                locationStr = ` ["${fullText}"]`;
-                            }
-                        }
-                        break;
-                    case 'docx':
-                        locationStr = ` - Đoạn thứ: ${locator.block_index ?? 'N/A'}`;
-                        break;
-                    case 'pdf':
-                        locationStr = ` - Trang thứ: ${locator.page_number ?? 'N/A'}`;
-                        break;
-                    case 'youtube': case 'video': case 'audio':
-                        const start = formatTime(locator.start_seconds ?? 0);
-                        const end = formatTime(locator.end_seconds ?? 0);
-                        locationStr = ` - Thời điểm: ${start} - ${end}`;
-                        break;
-                }
-            }
-
-            // Gửi chuỗi text thuần túy lên Wiki
-            wikiData.array_bibliography.push(`[${bib.id}] - ${sourceTitle}${locationStr}`);
+            wikiData.array_sources = Array.from(uniqueSourcesSet);
         }
-        wikiData.array_sources = Array.from(uniqueSourcesSet);
-    }
 
-    // Gọi API upload
-    try {
+        // Gọi API upload
         const uploadResult = await apiClient.apiPost(`/ai/wiki/upload`, wikiData);
 
         // Kiểm tra kết quả từ Backend trả về
         if (uploadResult && uploadResult.status === "success") {
-            alert("Đã upload dữ liệu lên Wiki thành công!");
+            alert(mnI18n.t('workspace.upload_success'));
             
             const wikiUrlName = notebookData.name.replace(/\s+/g, '_');
             location.href = `http://localhost/wikicrop/index.php/Draft:${wikiUrlName}`;
         } else {
-            
-            const errorMsg = uploadResult?.message || "Không xác định được nguyên nhân.";
-            alert(`Lỗi hệ thống: ${errorMsg}`);
+            const errorMsg = uploadResult?.message || mnI18n.t('workspace.unspecified_reason');
+            alert(mnI18n.t('workspace.system_error', { detail: errorMsg }));
         }
-    } catch (error) {
-        console.error("Lỗi thực thi API:", error);
-        alert("Không thể kết nối đến máy chủ API. Vui lòng kiểm tra lại tài khoản bot");
-    }
 
-    return wikiData;
+        return wikiData;
+
+    } catch (error) {
+        console.error("Lỗi uploadToWiki:", error);
+        alert(mnI18n.t('workspace.upload_connect_error'));
+    } finally {
+        hideLoadingModal();
+    }
 }
 
 
@@ -1124,7 +1150,7 @@ async function openMindmapModal(notebook_id) {
 
     // Reset trạng thái ban đầu: Hiện loading chung và xóa layout cũ để fetch cái mới
     status.style.display = 'block';
-    status.innerText = 'Đang tải sơ đồ...';
+    status.innerText = mnI18n.t('workspace.loading_mindmap');
     const oldLayout = drawZone.querySelector('.mm-layout');
     if (oldLayout) oldLayout.remove();
 
@@ -1132,7 +1158,7 @@ async function openMindmapModal(notebook_id) {
     btnGenerate.onclick = async () => {
         const originalText = btnGenerate.innerText;
         
-        btnGenerate.innerText = 'Đang tạo...';
+        btnGenerate.innerText = mnI18n.t('workspace.generating');
         btnGenerate.disabled = true;
         btnGenerate.style.opacity = '0.7';
         btnGenerate.style.cursor = 'not-allowed';
@@ -1144,7 +1170,7 @@ async function openMindmapModal(notebook_id) {
             }
         } catch (e) {
             status.style.display = 'block';
-            status.innerText = 'Lỗi khi tạo sơ đồ: ' + (e.message || 'Server error');
+            status.innerText = mnI18n.t('workspace.mindmap_error', { detail: e.message || 'Server error' });
         } finally {
             btnGenerate.innerText = originalText;
             btnGenerate.disabled = false;
@@ -1158,7 +1184,7 @@ async function openMindmapModal(notebook_id) {
         
         if (response.status === 404) {
             status.style.display = 'block';
-            status.innerText = 'Chưa có sơ đồ tư duy cho notebook này.';
+            status.innerText = mnI18n.t('workspace.no_mindmap');
             return;
         }
 
@@ -1181,7 +1207,7 @@ async function openMindmapModal(notebook_id) {
 
     } catch (error) {
         status.style.display = 'block';
-        status.innerText = 'Lỗi kết nối hệ thống khi tải sơ đồ.';
+        status.innerText = mnI18n.t('workspace.mindmap_connect_error');
     }
 }
 

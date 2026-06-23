@@ -1,5 +1,5 @@
 // ==========================================
-// 1. KHỞI TẠO AN TOÀN
+// 1. SAFE INITIALIZATION
 // ==========================================
 function initSourceManager() {
     const app = document.getElementById('sm_app');
@@ -24,7 +24,7 @@ if (document.readyState === "loading") {
 }
 
 // ==========================================
-// 2. TẢI DANH SÁCH SỔ TAY
+// 2. LOAD NOTEBOOK LIST
 // ==========================================
 async function smLoadNotebooks() {
     const select = document.getElementById('sm_notebook_select');
@@ -33,10 +33,10 @@ async function smLoadNotebooks() {
         const userId = apiClient.getUserId();
         const notebooks = await apiClient.apiGet(`/notebooks/user/${userId}`);
         
-        select.innerHTML = "<option value=''>-- Chọn Sổ tay --</option>";
+        select.innerHTML = `<option value=''>-- ${mnI18n.t('source.select_notebook')} --</option>`;
         
         if (notebooks && notebooks.length > 0) {
-            console.log("Sổ tay đã tải:", notebooks);
+            console.log("Notebooks loaded:", notebooks);
             notebooks.forEach(nb => {
                 const option = document.createElement('option');
                 option.value = nb.id;
@@ -44,16 +44,16 @@ async function smLoadNotebooks() {
                 select.appendChild(option);
             });
         } else {
-            select.innerHTML = "<option value=''>-- Bạn chưa có Sổ tay nào --</option>";
+            select.innerHTML = `<option value=''>-- ${mnI18n.t('source.no_notebooks')} --</option>`;
         }
     } catch (error) {
-        console.error("Lỗi khi tải Sổ tay:", error);
-        select.innerHTML = "<option value=''>-- Lỗi tải dữ liệu --</option>";
+        console.error("Error loading notebooks:", error);
+        select.innerHTML = `<option value=''>-- ${mnI18n.t('source.error_loading_data')} --</option>`;
     }
 }
 
 // ==========================================
-// 3. TẢI NGUỒN DỮ LIỆU
+// 3. LOAD DATA SOURCES
 // ==========================================
 async function smLoadSources() {
     const nbId = document.getElementById('sm_notebook_select').value;
@@ -62,12 +62,12 @@ async function smLoadSources() {
     const btnDelete = document.getElementById('sm_btn_delete_source');
     const tbody = document.getElementById('sm_chunk_table_body');
 
-    // Reset giao diện
-    select.innerHTML = "<option value=''>-- Chọn Nguồn --</option>";
+    // Reset UI
+    select.innerHTML = `<option value=''>-- ${mnI18n.t('source.select_source')} --</option>`;
     select.disabled = true;
-    details.innerHTML = "<span style='color: #94a3b8; font-style: italic;'>Chưa có thông tin.</span>";
+    details.innerHTML = `<span style='color: #94a3b8; font-style: italic;'>${mnI18n.t('source.no_info')}</span>`;
     btnDelete.style.display = "none";
-    tbody.innerHTML = "<tr><td colspan='4' style='padding: 20px; text-align: center; color: #64748b; font-style: italic;'>Vui lòng chọn Nguồn dữ liệu ở cột bên trái</td></tr>";
+    tbody.innerHTML = `<tr><td colspan='4' style='padding: 20px; text-align: center; color: #64748b; font-style: italic;'>${mnI18n.t('source.choose_data_source')}</td></tr>`;
 
     if (!nbId) return;
 
@@ -83,15 +83,15 @@ async function smLoadSources() {
                 select.appendChild(option);
             });
         } else {
-            select.innerHTML = "<option value=''>-- Sổ tay này chưa có nguồn --</option>";
+            select.innerHTML = `<option value=''>-- ${mnI18n.t('source.no_sources')} --</option>`;
         }
     } catch (error) {
-        console.error("Lỗi khi tải Nguồn:", error);
+        console.error("Error loading sources:", error);
     }
 }
 
 // ==========================================
-// 4. TẢI PHÂN ĐOẠN (CHUNKS)
+// 4. LOAD SEGMENTS (CHUNKS)
 // ==========================================
 async function smLoadChunks() {
     const select = document.getElementById('sm_source_select');
@@ -101,11 +101,11 @@ async function smLoadChunks() {
     const tbody = document.getElementById('sm_chunk_table_body');
     const chunkDetails = document.getElementById('sm_chunk_details');
 
-    tbody.innerHTML = "<tr><td colspan='4' style='padding: 20px; text-align: center; color: #d97706; font-style: italic;'>Đang tải dữ liệu chunk...</td></tr>";
-    chunkDetails.innerHTML = "<span style='color: #94a3b8; font-style: italic;'>Click vào một phân đoạn ở bảng trên để xem toàn bộ nội dung tại đây...</span>";
+    tbody.innerHTML = `<tr><td colspan='4' style='padding: 20px; text-align: center; color: #d97706; font-style: italic;'>${mnI18n.t('source.loading_chunk_data')}</td></tr>`;
+    chunkDetails.innerHTML = `<span style='color: #94a3b8; font-style: italic;'>${mnI18n.t('source.click_segment')}</span>`;
 
     if (!sourceId) {
-        details.innerHTML = "<span style='color: #94a3b8; font-style: italic;'>Chưa có thông tin.</span>";
+        details.innerHTML = `<span style='color: #94a3b8; font-style: italic;'>${mnI18n.t('source.no_info')}</span>`;
         btnDelete.style.display = "none";
         return;
     }
@@ -114,10 +114,10 @@ async function smLoadChunks() {
     const srcData = JSON.parse(selectedOption.dataset.info);
     
     details.innerHTML = `
-        <strong style="color: #0f172a;">Tên:</strong> ${srcData.title}<br>
-        <strong style="color: #0f172a;">Loại:</strong> ${srcData.type}<br>
-        <strong style="color: #0f172a;">Đường dẫn:</strong> <span style="word-break: break-all; color: #3b82f6;">${srcData.url_or_path}</span><br>
-        <strong style="color: #0f172a;">Trạng thái:</strong> <span style="color: ${srcData.status === 'completed' ? '#10b981' : '#ef4444'}; font-weight: bold;">${srcData.status}</span>
+        <strong style="color: #0f172a;">${mnI18n.t('source.name')}:</strong> ${srcData.title}<br>
+        <strong style="color: #0f172a;">${mnI18n.t('source.type')}:</strong> ${srcData.type}<br>
+        <strong style="color: #0f172a;">${mnI18n.t('source.path')}:</strong> <span style="word-break: break-all; color: #3b82f6;">${srcData.url_or_path}</span><br>
+        <strong style="color: #0f172a;">${mnI18n.t('source.status')}:</strong> <span style="color: ${srcData.status === 'completed' ? '#10b981' : '#ef4444'}; font-weight: bold;">${srcData.status}</span>
     `;
     btnDelete.style.display = "block";
 
@@ -136,17 +136,17 @@ async function smLoadChunks() {
                 if (displayContent.length > 70) {
                     displayContent = `<span class="sm-short">${displayContent.substring(0, 70)}...</span>
                                       <span class="sm-full" style="display:none;">${displayContent}</span>
-                                      <a href="javascript:void(0)" class="sm-toggle-btn" style="color: #3b82f6; text-decoration: none; font-size: 13px; font-weight: bold; margin-left: 5px;">Đọc thêm</a>`;
+                                      <a href="javascript:void(0)" class="sm-toggle-btn" style="color: #3b82f6; text-decoration: none; font-size: 13px; font-weight: bold; margin-left: 5px;">${mnI18n.t('source.read_more')}</a>`;
                 }
 
                 tr.innerHTML = `
                     <td style='padding: 12px; color: #64748b;'>${chunk.id}</td>
                     <td style='padding: 12px; color: #64748b; font-size: 12px;'>
-                        <span style='background: #e2e8f0; padding: 2px 6px; border-radius: 4px;'>${chunk.chunk_index ? chunk.chunk_index.substring(0, 8) + '...' : 'N/A'}</span>
+                        <span style='background: #e2e8f0; padding: 2px 6px; border-radius: 4px;'>${chunk.chunk_index ? chunk.chunk_index.substring(0, 8) + '...' : mnI18n.t('common.na')}</span>
                     </td>
                     <td style='padding: 12px;'>${displayContent}</td>
                     <td style='padding: 12px; text-align: center;'>
-                        <button class="sm-btn-del-chunk" data-id="${chunk.id}" style="background: #fee2e2; color: #ef4444; border: 1px solid #fca5a5; padding: 6px 10px; cursor: pointer; border-radius: 4px; font-weight: bold; transition: all 0.2s;">Xóa</button>
+                        <button class="sm-btn-del-chunk" data-id="${chunk.id}" style="background: #fee2e2; color: #ef4444; border: 1px solid #fca5a5; padding: 6px 10px; cursor: pointer; border-radius: 4px; font-weight: bold; transition: all 0.2s;">${mnI18n.t('source.delete')}</button>
                     </td>
                 `;
 
@@ -161,45 +161,45 @@ async function smLoadChunks() {
                         if (shortSpan.style.display === 'none') {
                             shortSpan.style.display = 'inline';
                             fullSpan.style.display = 'none';
-                            e.target.innerText = 'Đọc thêm';
+                            e.target.innerText = mnI18n.t('source.read_more');
                         } else {
                             shortSpan.style.display = 'none';
                             fullSpan.style.display = 'inline';
-                            e.target.innerText = 'Thu gọn';
+                            e.target.innerText = mnI18n.t('source.collapse');
                         }
                         return;
                     }
 
-                    // --- PHẦN BỔ SUNG: RENDER CHI TIẾT CHUNK KÈM METADATA ---
+                    // --- ADDITIONAL SECTION: RENDER CHUNK DETAILS WITH METADATA ---
                     const meta = chunk.meta_data || {};
                     const sourceType = meta.source_type || 'unknown';
                     let locationStr = '';
 
                     switch (sourceType) {
                         case 'docx':
-                            locationStr = `Đoạn thứ: <strong>${meta.block_index ?? 'N/A'}</strong>`;
+                            locationStr = mnI18n.t('source.segment_number', { index: `<strong>${meta.block_index ?? mnI18n.t('common.na')}</strong>` });
                             break;
                         case 'pdf':
-                            locationStr = `Trang thứ: <strong>${meta.page_number ?? 'N/A'}</strong>`;
+                            locationStr = mnI18n.t('source.page_number', { index: `<strong>${meta.page_number ?? mnI18n.t('common.na')}</strong>` });
                             break;
                         case 'audio':
                         case 'youtube':
                             const start = formatTime(meta.start_seconds);
                             const end = formatTime(meta.end_seconds);
-                            locationStr = `Thời gian: <strong>${start}</strong> đến <strong>${end}</strong>`;
+                            locationStr = mnI18n.t('source.time_range', { start: `<strong>${start}</strong>`, end: `<strong>${end}</strong>` });
                             break;
                         case 'web':
-                            locationStr = `Nguồn Web (URL)`;
+                            locationStr = mnI18n.t('source.web_source');
                             break;
                     }
 
                     chunkDetails.innerHTML = `
                         <div style="margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px dashed #cbd5e1; font-size: 13px;">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                                <span><strong style="color: #1e293b;">ID:</strong> #${chunk.id}</span>
+                                <span><strong style="color: #1e293b;">${mnI18n.t('common.id')}:</strong> #${chunk.id}</span>
                                 <span style="font-family: monospace; background: #f1f5f9; padding: 2px 5px; border-radius: 3px;">${chunk.chunk_index}</span>
                             </div>
-                            <div><strong style="color: #1e293b;">Vị trí:</strong> ${locationStr} [${sourceType.toUpperCase()}]</div>
+                            <div><strong style="color: #1e293b;">${mnI18n.t('source.location')}:</strong> ${locationStr} [${sourceType.toUpperCase()}]</div>
                         </div>
                         <div style="white-space: pre-wrap;">${chunk.content}</div>
                     `;
@@ -208,28 +208,28 @@ async function smLoadChunks() {
                 tbody.appendChild(tr);
             });
         } else {
-            tbody.innerHTML = "<tr><td colspan='4' style='padding: 20px; text-align: center; color: #64748b; font-style: italic;'>Nguồn này không có dữ liệu trích xuất nào.</td></tr>";
+            tbody.innerHTML = `<tr><td colspan='4' style='padding: 20px; text-align: center; color: #64748b; font-style: italic;'>${mnI18n.t('source.no_extracted_data')}</td></tr>`;
         }
     } catch (error) {
-        tbody.innerHTML = "<tr><td colspan='4' style='padding: 20px; text-align: center; color: #ef4444;'>Lỗi khi tải dữ liệu phân đoạn.</td></tr>";
+        tbody.innerHTML = `<tr><td colspan='4' style='padding: 20px; text-align: center; color: #ef4444;'>${mnI18n.t('source.error_loading_segments')}</td></tr>`;
     }
 }
 
 // ==========================================
-// 5. CÁC HÀM XÓA
+// 5. DELETE FUNCTIONS
 // ==========================================
 async function smDeleteSource() {
     const sourceId = document.getElementById('sm_source_select').value;
     if (!sourceId) return;
 
-    if (confirm("Hành động này sẽ xóa toàn bộ Chunks bên trong. Bạn có chắc chắn?")) {
+    if (confirm(mnI18n.t('source.delete_all_chunks_confirm'))) {
         const result = await apiClient.apiDelete(`/sources/${sourceId}`);
         if (result) smLoadSources();
     }
 }
 
 async function smDeleteChunk(chunkId) {
-    if (confirm("Bạn muốn xóa phân đoạn dữ liệu này?")) {
+    if (confirm(mnI18n.t('source.delete_segment_confirm'))) {
         const result = await apiClient.apiDelete(`/chunks/${chunkId}`);
         if (result) smLoadChunks();
     }
