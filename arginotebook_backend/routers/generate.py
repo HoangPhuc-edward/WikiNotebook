@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from databases.connection import get_db
+from databases import crud_content
 from schemas import content_schema
 from services import ai_generation
 
@@ -132,3 +133,35 @@ def generate_mindmap(notebook_id: int, db: Session = Depends(get_db)):
         return {"status": "success", "mindmap_url": mindmap_url}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# --- API 5: CHAT HỎI ĐÁP (RAG CHAT) ---
+@router.post("/chat/{notebook_id}/ask", response_model=content_schema.ChatAskResponse)
+def ask_chat(
+    notebook_id: int,
+    req: content_schema.ChatAskRequest,
+    db: Session = Depends(get_db)
+):
+    try:
+        user_msg, assistant_msg = ai_generation.ask_chat_question(
+            db=db,
+            notebook_id=notebook_id,
+            question=req.question,
+            history_limit=req.history_limit
+        )
+        return {"question": user_msg, "answer": assistant_msg}
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"AI system error: {str(e)}")
+
+
+@router.get("/chat/{notebook_id}/history", response_model=List[content_schema.ChatMessageResponse])
+def get_chat_history(notebook_id: int, limit: int = 50, db: Session = Depends(get_db)):
+    return crud_content.get_chat_messages_by_notebook(db, notebook_id, limit=limit)
+
+
+@router.delete("/chat/{notebook_id}/history")
+def clear_chat_history(notebook_id: int, db: Session = Depends(get_db)):
+    crud_content.delete_chat_messages_by_notebook(db, notebook_id)
+    return {"status": "success", "message": "Đã xóa lịch sử hội thoại"}

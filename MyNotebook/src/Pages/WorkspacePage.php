@@ -35,47 +35,95 @@ class WorkspacePage {
                     </div>
                 </div>
                 <div class='ws-column ws-col-main' style='display: flex; flex-direction: column; gap: 20px;'>
-    
-                    <div style='display: flex; justify-content: space-between; align-items: center; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px;'>
-                        <input type='hidden' id='ws_selected_template_id' value=''>
-                        
-                        <button type='button' id='ws_btn_open_template_modal' class='ws-btn' style='padding: 10px 15px; background: #2C7878; border: 2px solid #2C7878; color: white; font-size: 13px; font-weight: bold; border-radius: 8px; cursor: pointer;'>
-                            " . I18n::msg( 'workspace.select_template_button' ) . "
+
+                    <div style='display: inline-flex; align-self: flex-start; gap: 4px; background: #f1f5f9; border-radius: 10px; padding: 4px;'>
+                        <button type='button' id='ws_tab_btn_article' class='ws-main-tab-btn ws-main-tab-active' style='padding: 8px 16px; border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; background: #2C7878; color: #ffffff; transition: all 0.15s ease-in-out;'>
+                            <i class='fas fa-file-lines'></i> " . I18n::msg( 'workspace.tab_article' ) . "
                         </button>
-                        
-                        <span id='ws_selected_template_name' style='font-size: 14px; color: #b91010; font-weight: 500;'>
-                            " . I18n::msg( 'workspace.no_template_selected' ) . "
-                        </span>
+                        <button type='button' id='ws_tab_btn_chat' class='ws-main-tab-btn' style='padding: 8px 16px; border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; background: transparent; color: #475569; transition: all 0.15s ease-in-out;'>
+                            <i class='fas fa-comments'></i> " . I18n::msg( 'workspace.tab_chat' ) . "
+                        </button>
                     </div>
 
-                    <div style='display: flex; flex-direction: column; background: #ffffff;  border-radius: 8px; padding: 15px; flex: 1;'>
-                        
-                        <div style='display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #f1f5f9;'>
-                            
-                            <h3 id='ws_notebook_title' class='ws-title ws-title-lg' style='margin: 0; max-width: 60%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 18px; color: #1e293b;'>
-                                " . I18n::msg( 'workspace.article_content' ) . "
-                            </h3>
-                            
-                            <div style='display: flex; align-items: center; gap: 12px;'>
-                                <span id='ws_status_text' style='color: #2563eb; font-size: 14px; font-weight: 500;'></span>
-                                
-                                <button id='ws_btn_generate' class='ws-btn' style='display: flex; align-items: center; gap: 8px; background: #2563eb; color: white; padding: 10px 20px; font-size: 14px; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;'>
-                                    <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 448 512' style='width: 14px; height: 14px; fill: currentColor;'>
-                                        <path d='M256 80c0-17.7-14.3-32-32-32s-32 14.3-32 32V224H48c-17.7 0-32 14.3-32 32s14.3 32 32 32H192V432c0 17.7 14.3 32 32 32s32-14.3 32-32V288H400c17.7 0 32-14.3 32-32s-14.3-32-32-32H256V80z'/>
-                                    </svg>
-                                    " . I18n::msg( 'workspace.generate_article' ) . "
-                                </button>
-                            </div>
+                    <div id='ws_panel_article' style='display: flex; flex-direction: column; gap: 20px; flex: 1;'>
+
+                        <div style='display: flex; justify-content: space-between; align-items: center; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px;'>
+                            <input type='hidden' id='ws_selected_template_id' value=''>
+
+                            <button type='button' id='ws_btn_open_template_modal' class='ws-btn' style='padding: 10px 15px; background: #2C7878; border: 2px solid #2C7878; color: white; font-size: 13px; font-weight: bold; border-radius: 8px; cursor: pointer;'>
+                                " . I18n::msg( 'workspace.select_template_button' ) . "
+                            </button>
+
+                            <span id='ws_selected_template_name' style='font-size: 14px; color: #b91010; font-weight: 500;'>
+                                " . I18n::msg( 'workspace.no_template_selected' ) . "
+                            </span>
                         </div>
 
-                        <div style='flex: 1; display: flex; flex-direction: column;'>
-                            <div id='ws_article_view' class='ws-article-view' style='flex: 1;'>" . I18n::msg( 'workspace.no_article' ) . "</div>
-                            <div id='ws_article_edit' style='display: none; flex-direction: column; gap: 15px;'></div>
+                        <div style='display: flex; flex-direction: column; background: #ffffff;  border-radius: 8px; padding: 15px; flex: 1;'>
+
+                            <div style='display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #f1f5f9;'>
+
+                                <h3 id='ws_notebook_title' class='ws-title ws-title-lg' style='margin: 0; max-width: 60%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 18px; color: #1e293b;'>
+                                    " . I18n::msg( 'workspace.article_content' ) . "
+                                </h3>
+
+                                <div style='display: flex; align-items: center; gap: 12px;'>
+                                    <span id='ws_status_text' style='color: #2563eb; font-size: 14px; font-weight: 500;'></span>
+
+                                    <button id='ws_btn_generate' class='ws-btn' style='display: flex; align-items: center; gap: 8px; background: #2563eb; color: white; padding: 10px 20px; font-size: 14px; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;'>
+                                        <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 448 512' style='width: 14px; height: 14px; fill: currentColor;'>
+                                            <path d='M256 80c0-17.7-14.3-32-32-32s-32 14.3-32 32V224H48c-17.7 0-32 14.3-32 32s14.3 32 32 32H192V432c0 17.7 14.3 32 32 32s32-14.3 32-32V288H400c17.7 0 32-14.3 32-32s-14.3-32-32-32H256V80z'/>
+                                        </svg>
+                                        " . I18n::msg( 'workspace.generate_article' ) . "
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div style='flex: 1; display: flex; flex-direction: column;'>
+                                <div id='ws_article_view' class='ws-article-view' style='flex: 1;'>" . I18n::msg( 'workspace.no_article' ) . "</div>
+                                <div id='ws_article_edit' style='display: none; flex-direction: column; gap: 15px;'></div>
+                            </div>
+
                         </div>
-                        
+                    </div>
+
+                    <div id='ws_panel_chat' style='display: none; flex-direction: column; background: #ffffff; border-radius: 8px; padding: 15px; flex: 1; min-height: 0;'>
+
+                        <div style='display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #f1f5f9;'>
+                            <h3 class='ws-title ws-title-lg' style='margin: 0; font-size: 18px; color: #1e293b;'>
+                                <i class='fas fa-comments' style='color: #2563eb;'></i> " . I18n::msg( 'workspace.chat_title' ) . "
+                            </h3>
+                            <button id='ws_btn_clear_chat' class='ws-btn' style='background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer;'>
+                                " . I18n::msg( 'workspace.chat_clear_history' ) . "
+                            </button>
+                        </div>
+
+                        <div id='ws_chat_history' style='flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 5px 5px 15px 5px; min-height: 200px;'>
+                            <p style='color: #64748b; font-style: italic; text-align: center;'>" . I18n::msg( 'workspace.chat_empty' ) . "</p>
+                        </div>
+
+                        <div style='display: flex; gap: 10px; align-items: flex-end; border-top: 1px solid #f1f5f9; padding-top: 15px;'>
+                            <textarea id='ws_chat_input' rows='1' placeholder='" . I18n::msg( 'workspace.chat_input_placeholder' ) . "'
+                                style='flex: 1; resize: none; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; font-size: 14px; font-family: inherit; max-height: 120px;'></textarea>
+                            <button id='ws_btn_chat_send' class='ws-btn' style='background: #2563eb; color: #fff; border: none; border-radius: 8px; padding: 10px 18px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;'>
+                                <i class='fas fa-paper-plane'></i> " . I18n::msg( 'workspace.chat_send' ) . "
+                            </button>
+                        </div>
                     </div>
                 </div>
-                                
+
+                <style>
+                    .ws-chat-msg { display: flex; flex-direction: column; max-width: 78%; }
+                    .ws-chat-msg-user { align-self: flex-end; align-items: flex-end; }
+                    .ws-chat-msg-assistant { align-self: flex-start; align-items: flex-start; }
+                    .ws-chat-bubble { padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+                    .ws-chat-msg-user .ws-chat-bubble { background: #2563eb; color: #ffffff; border-bottom-right-radius: 2px; }
+                    .ws-chat-msg-assistant .ws-chat-bubble { background: #f1f5f9; color: #1e293b; border-bottom-left-radius: 2px; }
+                    .ws-chat-sources { margin-top: 6px; font-size: 12px; color: #64748b; }
+                    .ws-chat-sources .citation-marker { color: #2563eb; cursor: pointer; font-weight: bold; padding: 0 2px; }
+                    .ws-chat-loading { align-self: flex-start; color: #64748b; font-size: 13px; font-style: italic; }
+                </style>
+
                 <div class='ws-column ws-col-right'>
                     <h3 class='ws-title ws-title-sm'>" . I18n::msg( 'workspace.actions' ) . "</h3>
                     <button id='ws_btn_edit' class='ws-btn ws-btn-action' style='background: #ffffff; border: 1px solid #cbd5e1; color: #334155;'>" . I18n::msg( 'workspace.edit_content' ) . "</button>

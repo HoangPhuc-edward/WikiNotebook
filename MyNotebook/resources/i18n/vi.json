@@ -37,6 +37,7 @@
     "dashboard.outline_settings": "Cài đặt dàn ý",
     "dashboard.source_settings": "Cài đặt nguồn",
     "dashboard.notebook_list": "Danh sách sổ tay",
+    "dashboard.select_language": "Chọn ngôn ngữ",
     "api.error_server": "Lỗi máy chủ ({{status}})",
     "api.error_alert_prefix": "Lỗi: ",
     "template.page_title": "Danh sách template",
@@ -219,5 +220,15 @@
     "workspace.error_loading_data": "Đã xảy ra lỗi trong khi tải dữ liệu.",
     "workspace.error_loading_url": "Lỗi trích xuất URL:",
     "workspace.error_processing_file": "Lỗi: {{detail}}",
-    "workspace.error_network_upload": "Lỗi mạng trong khi tải tệp lên"
+    "workspace.error_network_upload": "Lỗi mạng trong khi tải tệp lên",
+    "workspace.tab_article": "Bài viết",
+    "workspace.tab_chat": "Chatbot",
+    "workspace.chat_title": "Trò chuyện với sổ tay",
+    "workspace.chat_clear_history": "Xóa lịch sử",
+    "workspace.chat_clear_confirm": "Bạn có chắc chắn muốn xóa toàn bộ lịch sử trò chuyện?",
+    "workspace.chat_empty": "Chưa có cuộc trò chuyện nào. Hãy đặt câu hỏi về nguồn tài liệu để bắt đầu!",
+    "workspace.chat_input_placeholder": "Đặt câu hỏi về nguồn tài liệu của bạn...",
+    "workspace.chat_send": "Gửi",
+    "workspace.chat_sources_label": "Nguồn:",
+    "workspace.chat_answering": "AI đang suy nghĩ câu trả lời..."
 }

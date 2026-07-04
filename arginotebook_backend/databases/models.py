@@ -95,8 +95,19 @@ class Citation(Base):
 
 class Mindmap(Base):
     __tablename__ = "mindmap"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     notebook_id = Column(Integer)
-    structure = Column(JSON) 
+    structure = Column(JSON)
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    notebook_id = Column(Integer, ForeignKey("notebooks.id"), index=True)
+    role = Column(String(20)) # "user" | "assistant"
+    content = Column(Text)
+    sources = Column(JSON, nullable=True) # Danh sách nguồn tham khảo (chỉ có ở role="assistant")
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
     

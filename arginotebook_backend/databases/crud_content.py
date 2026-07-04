@@ -123,3 +123,22 @@ def delete_mindmap(db: Session, mindmap_id: int):
         db.commit()
         return True
     return False
+
+
+# CHAT MESSAGE CRUD
+def create_chat_message(db: Session, message: content_schema.ChatMessageCreate):
+    db_message = models.ChatMessage(**message.model_dump())
+    db.add(db_message)
+    db.commit()
+    db.refresh(db_message)
+    return db_message
+
+def get_chat_messages_by_notebook(db: Session, notebook_id: int, limit: int = 50):
+    return db.query(models.ChatMessage).filter(
+        models.ChatMessage.notebook_id == notebook_id
+    ).order_by(models.ChatMessage.id.desc()).limit(limit).all()[::-1]
+
+def delete_chat_messages_by_notebook(db: Session, notebook_id: int):
+    db.query(models.ChatMessage).filter(models.ChatMessage.notebook_id == notebook_id).delete()
+    db.commit()
+    return True

@@ -130,3 +130,31 @@ class MindmapResponse(MindmapBase):
 
     class Config:
         from_attributes = True
+
+# ==========================================
+# 6. CHAT (Hỏi đáp)
+# ==========================================
+class ChatMessageCreate(BaseModel):
+    notebook_id: int
+    role: str
+    content: str
+    sources: Optional[Any] = None
+
+class ChatMessageResponse(BaseModel):
+    id: int
+    notebook_id: int
+    role: str
+    content: str
+    sources: Optional[Any] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class ChatAskRequest(BaseModel):
+    question: str
+    history_limit: int = 10
+
+class ChatAskResponse(BaseModel):
+    question: ChatMessageResponse
+    answer: ChatMessageResponse

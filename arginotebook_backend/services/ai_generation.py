@@ -5,6 +5,7 @@ from databases import models, crud_content, crud_notebook
 from schemas import content_schema, notebook_schema
 from ai_core.llm_engine import LLMManager
 from ai_core.wiki_composer import WikiComposer
+from ai_core.chat_composer import ChatComposer
 from ai_core.preprocessor import Preprocessor
 from ai_core.template_manager import ContentTemplate
 from config_loader import load_llm, load_llm_small, load_admin_account
@@ -173,6 +174,40 @@ def generate_article_logic(db: Session, user_id: int, notebook_id: int, template
                 crud_content.create_citation(db, citation_in)
 
     return db_article
+
+def ask_chat_question(db: Session, notebook_id: int, question: str, history_limit: int = 10):
+    notebook = crud_notebook.get_notebook_by_id(db, notebook_id)
+    if not notebook:
+        raise ValueError(f"Notebook not found with ID = {notebook_id}")
+
+    my_llm = load_llm()
+    my_mini_llm = load_llm_small()
+
+    session_id = f"nb_{notebook_id}"
+
+    previous_messages = crud_content.get_chat_messages_by_notebook(db, notebook_id, limit=history_limit)
+    chat_history = [{"role": m.role, "content": m.content} for m in previous_messages]
+
+    composer = ChatComposer(session_id=session_id, llm=my_llm, llm_small=my_mini_llm)
+    result = composer.answer_question(question, chat_history=chat_history)
+
+    user_msg_in = content_schema.ChatMessageCreate(
+        notebook_id=notebook_id,
+        role="user",
+        content=question
+    )
+    db_user_msg = crud_content.create_chat_message(db, user_msg_in)
+
+    assistant_msg_in = content_schema.ChatMessageCreate(
+        notebook_id=notebook_id,
+        role="assistant",
+        content=result.get("answer", ""),
+        sources=result.get("sources", [])
+    )
+    db_assistant_msg = crud_content.create_chat_message(db, assistant_msg_in)
+
+    return db_user_msg, db_assistant_msg
+
 
 import requests
 

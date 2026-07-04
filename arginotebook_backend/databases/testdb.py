@@ -1,6 +1,6 @@
 from databases.connection import engine, Base
 # Bắt buộc phải import các models để SQLAlchemy nhận diện được cấu trúc
-from databases.models import LLMConfig, Notebook, Source, SourceChunk, Template, Article, Citation
+from databases.models import LLMConfig, Notebook, Source, SourceChunk, Template, Article, Citation, ChatMessage
 
 def init_db():
     print("Đang kết nối đến MySQL và kiểm tra cấu trúc bảng...")

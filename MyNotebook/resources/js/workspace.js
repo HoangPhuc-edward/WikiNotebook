@@ -61,6 +61,20 @@ function initWorkspace() {
         mindmapCloseBtn.addEventListener('click', closeMindmapModal);
     }
 
+    // Tab bar: Bài viết / Chatbot
+    document.getElementById('ws_tab_btn_article').addEventListener('click', () => switchWorkspaceTab('article'));
+    document.getElementById('ws_tab_btn_chat').addEventListener('click', () => switchWorkspaceTab('chat'));
+
+    // Chatbot
+    document.getElementById('ws_btn_chat_send').addEventListener('click', handleChatSend);
+    document.getElementById('ws_chat_input').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleChatSend();
+        }
+    });
+    document.getElementById('ws_btn_clear_chat').addEventListener('click', handleClearChat);
+
     loadNotebookDetails();
     loadArticle();
 }
@@ -134,14 +148,37 @@ async function loadNotebookDetails() {
             statusBadge.innerText = src.status;
 
             // Badge Type
-            const typeBadge = document.createElement('span');
-            typeBadge.style.backgroundColor = "#E6E6E6"; // Nền xám
-            typeBadge.style.color = "#000000"; // Chữ đen
-            typeBadge.style.padding = "2px 10px";
-            typeBadge.style.borderRadius = "12px"; // Bo góc cong
+             const typeBadge = document.createElement('span');
+            typeBadge.style.display = "inline-flex";
+            typeBadge.style.alignItems = "center";
+            typeBadge.style.gap = "6px";
+            typeBadge.style.backgroundColor = "#e2e8f0"; // Màu nền xám trung tính (Tailwind slate-200)
+            typeBadge.style.color = "#1e293b"; // Màu chữ xám đậm (Tailwind slate-800)
+            typeBadge.style.padding = "4px 10px";
+            typeBadge.style.borderRadius = "12px";
             typeBadge.style.fontSize = "12px";
-            typeBadge.style.fontWeight = "500";
-            typeBadge.innerText = src.type || mnI18n.t('common.na');
+            typeBadge.style.fontWeight = "600";decodeURI
+
+            // Bản đồ cấu hình Icon và Nhãn hiển thị cho từng loại nguồn
+            const sourceConfig = {
+                'url': { icon: 'fas fa-globe', label: 'URL', bgColor: '#e0f2fe', color: '#03a18e' },         // Xanh dương
+                'web': { icon: 'fas fa-globe', label: 'WEB', bgColor: '#e0f2fe', color: '#0369a1' },
+                'docx': { icon: 'fas fa-file-word', label: 'DOCX', bgColor: '#dbeafe', color: '#1d4ed8' },   // Xanh nước biển
+                'pdf': { icon: 'fas fa-file-pdf', label: 'PDF', bgColor: '#fee2e2', color: '#b91c1c' },      // Đỏ
+                'youtube': { icon: 'fab fa-youtube', label: 'YouTube', bgColor: '#ffedd5', color: '#c2410c' }, // Cam
+                'audio': { icon: 'fas fa-file-audio', label: 'AUDIO', bgColor: '#f3e8ff', color: '#6b21a8' },  // Tím
+                'video': { icon: 'fas fa-file-video', label: 'VIDEO', bgColor: '#f3e8ff', color: '#6b21a8' }
+            };
+
+            const currentType = (src.type || 'unknown').toLowerCase();
+            const config = sourceConfig[currentType] || { icon: 'fas fa-file', label: (src.type || 'N/A').toUpperCase(), bgColor: '#e2e8f0', color: '#1e293b' };
+
+            // Áp dụng màu sắc động theo loại nguồn để tăng tính thẩm mỹ
+            typeBadge.style.backgroundColor = config.bgColor;
+            typeBadge.style.color = config.color;
+
+            // Chèn Icon và Nội dung chữ vào Badge
+            typeBadge.innerHTML = `<i class="${config.icon}"></i> <span>${config.label}</span>`;
 
             // Lắp ráp các thành phần
             badgeContainer.appendChild(statusBadge);
@@ -347,6 +384,142 @@ async function loadArticle() {
         view.innerHTML = `<p style='color: #666; font-style: italic;'>${mnI18n.t('workspace.no_article')}</p>`;
         editContainer.innerHTML = "";
     }
+}
+
+// ==========================================
+// TAB CHUYỂN ĐỔI: BÀI VIẾT / CHATBOT
+// ==========================================
+function switchWorkspaceTab(tab) {
+    const btnArticle = document.getElementById('ws_tab_btn_article');
+    const btnChat = document.getElementById('ws_tab_btn_chat');
+    const panelArticle = document.getElementById('ws_panel_article');
+    const panelChat = document.getElementById('ws_panel_chat');
+
+    if (tab === 'chat') {
+        panelArticle.style.display = 'none';
+        panelChat.style.display = 'flex';
+        btnChat.style.background = '#2C7878';
+        btnChat.style.color = '#ffffff';
+        btnArticle.style.background = 'transparent';
+        btnArticle.style.color = '#475569';
+
+        if (!window.chatHistoryLoaded) {
+            loadChatHistory();
+        }
+    } else {
+        panelChat.style.display = 'none';
+        panelArticle.style.display = 'flex';
+        btnArticle.style.background = '#2C7878';
+        btnArticle.style.color = '#ffffff';
+        btnChat.style.background = 'transparent';
+        btnChat.style.color = '#475569';
+    }
+}
+
+// ==========================================
+// CHATBOT (RAG CHAT)
+// ==========================================
+function buildChatSourcesHtml(sources) {
+    if (!sources || sources.length === 0) return '';
+
+    let html = `<div class="ws-chat-sources">${mnI18n.t('workspace.chat_sources_label')} `;
+    sources.forEach(src => {
+        const loc = src.locator || {};
+        if (loc.source_id) {
+            html += `<sup class="citation-marker" data-source-id="${loc.source_id}" data-chunk-index="${loc.chunk_index || ''}">[${src.id}]</sup> `;
+        } else {
+            html += `<sup style="color: #94a3b8; padding: 0 2px;">[${src.id}]</sup> `;
+        }
+    });
+    html += `</div>`;
+    return html;
+}
+
+function appendChatMessage(role, content, sources = null) {
+    const history = document.getElementById('ws_chat_history');
+
+    // Xóa placeholder rỗng nếu có
+    const emptyPlaceholder = history.querySelector('p');
+    if (emptyPlaceholder && history.children.length === 1) {
+        history.innerHTML = '';
+    }
+
+    const msgDiv = document.createElement('div');
+    msgDiv.className = role === 'user' ? 'ws-chat-msg ws-chat-msg-user' : 'ws-chat-msg ws-chat-msg-assistant';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'ws-chat-bubble';
+    bubble.innerText = content;
+    msgDiv.appendChild(bubble);
+
+    if (role === 'assistant' && sources && sources.length > 0) {
+        const sourcesWrap = document.createElement('div');
+        sourcesWrap.innerHTML = buildChatSourcesHtml(sources);
+        msgDiv.appendChild(sourcesWrap.firstElementChild);
+    }
+
+    history.appendChild(msgDiv);
+    history.scrollTop = history.scrollHeight;
+
+    if (typeof setupTooltipEvents === 'function') setupTooltipEvents();
+
+    return msgDiv;
+}
+
+async function loadChatHistory() {
+    const history = document.getElementById('ws_chat_history');
+    history.innerHTML = `<p style='color: #64748b; font-style: italic; text-align: center;'>${mnI18n.t('common.loading')}</p>`;
+
+    const data = await apiClient.apiGet(`/ai/chat/${window.nbId}/history?limit=50`);
+    window.chatHistoryLoaded = true;
+
+    if (!data || data.length === 0) {
+        history.innerHTML = `<p style='color: #64748b; font-style: italic; text-align: center;'>${mnI18n.t('workspace.chat_empty')}</p>`;
+        return;
+    }
+
+    history.innerHTML = '';
+    data.forEach(msg => {
+        appendChatMessage(msg.role, msg.content, msg.sources);
+    });
+}
+
+async function handleChatSend() {
+    const input = document.getElementById('ws_chat_input');
+    const sendBtn = document.getElementById('ws_btn_chat_send');
+    const question = input.value.trim();
+    if (!question) return;
+
+    appendChatMessage('user', question);
+    input.value = '';
+    input.disabled = true;
+    sendBtn.disabled = true;
+
+    const history = document.getElementById('ws_chat_history');
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'ws-chat-loading';
+    loadingDiv.innerHTML = `<i class='fa fa-spinner fa-spin'></i> ${mnI18n.t('workspace.chat_answering')}`;
+    history.appendChild(loadingDiv);
+    history.scrollTop = history.scrollHeight;
+
+    const result = await apiClient.apiPost(`/ai/chat/${window.nbId}/ask`, { question: question, history_limit: 10 });
+    loadingDiv.remove();
+
+    if (result && result.answer) {
+        appendChatMessage('assistant', result.answer.content, result.answer.sources);
+    }
+
+    input.disabled = false;
+    sendBtn.disabled = false;
+    input.focus();
+}
+
+async function handleClearChat() {
+    if (!confirm(mnI18n.t('workspace.chat_clear_confirm'))) return;
+
+    await apiClient.apiDelete(`/ai/chat/${window.nbId}/history`);
+    const history = document.getElementById('ws_chat_history');
+    history.innerHTML = `<p style='color: #64748b; font-style: italic; text-align: center;'>${mnI18n.t('workspace.chat_empty')}</p>`;
 }
 
 function closeMindmapModal() {

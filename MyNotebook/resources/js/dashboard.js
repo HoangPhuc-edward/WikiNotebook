@@ -5,9 +5,23 @@ function initDashboard() {
     const gridContainer = document.getElementById('notebook-grid');
     if (!gridContainer) return; 
 
+    const langSwitcher = document.getElementById('ws_lang_switcher');
     const langToggle = document.getElementById('ws_lang_toggle');
-    if (langToggle) {
-        langToggle.addEventListener('click', toggleDashboardLanguage);
+    if (langSwitcher && langToggle) {
+        langToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            langSwitcher.classList.toggle('open');
+        });
+
+        document.querySelectorAll('.ws-lang-option').forEach(option => {
+            option.addEventListener('click', () => setDashboardLanguage(option.getAttribute('data-lang')));
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!langSwitcher.contains(e.target)) {
+                langSwitcher.classList.remove('open');
+            }
+        });
     }
 
     loadNotebooks();
@@ -110,13 +124,13 @@ async function createNewNotebook() {
     }
 }
 
-function toggleDashboardLanguage() {
+function setDashboardLanguage(lang) {
     const currentLang = (mw.config.get('MyNotebookLang') || 'en').toLowerCase();
-    const nextLang = currentLang === 'vi' ? 'en' : 'vi';
+    if (lang === currentLang) return;
 
-    document.cookie = `mn_lang=${nextLang}; path=/; max-age=31536000`;
+    document.cookie = `mn_lang=${lang}; path=/; max-age=31536000`;
 
     const url = new URL(window.location.href);
-    url.searchParams.set('lang', nextLang);
+    url.searchParams.set('lang', lang);
     window.location.href = url.toString();
 }

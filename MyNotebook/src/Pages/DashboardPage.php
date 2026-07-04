@@ -57,26 +57,96 @@ class DashboardPage {
                 h2.ws-dashboard-title {
                     font-family: sans-serif !important; /* Force sans-serif font */
                     border-bottom: none !important; /* Remove the annoying horizontal rule */
-                    margin: 0 0 20px 0 !important; 
-                    color: #1e293b !important; 
-                    text-align: left; 
+                    margin: 0 0 20px 0 !important;
+                    color: #1e293b !important;
+                    text-align: left;
                     font-size: 1.6em;
                 }
+
+                /* Language switcher */
+                .ws-lang-switcher { position: relative; }
+
+                .ws-lang-btn {
+                    padding: 10px 16px;
+                    background: #ffffff;
+                    color: #334155;
+                    border: 2px solid #cbd5e1;
+                    border-radius: 25px;
+                    font-weight: bold;
+                    font-size: 14px;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    cursor: pointer;
+                    transition: all 0.2s ease-in-out;
+                }
+                .ws-lang-btn:hover { border-color: #187A35; color: #187A35; }
+                .ws-lang-btn i.fa-chevron-down { font-size: 11px; transition: transform 0.2s ease-in-out; }
+                .ws-lang-switcher.open .ws-lang-btn i.fa-chevron-down { transform: rotate(180deg); }
+
+                .ws-lang-menu {
+                    display: none;
+                    position: absolute;
+                    top: calc(100% + 6px);
+                    left: 0;
+                    background: #ffffff;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 10px;
+                    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+                    padding: 6px;
+                    min-width: 180px;
+                    z-index: 50;
+                }
+                .ws-lang-switcher.open .ws-lang-menu { display: block; }
+
+                .ws-lang-option {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    width: 100%;
+                    padding: 9px 10px;
+                    border: none;
+                    background: none;
+                    border-radius: 6px;
+                    font-size: 14px;
+                    color: #334155;
+                    text-align: left;
+                    cursor: pointer;
+                }
+                .ws-lang-option:hover { background: #f1f5f9; }
+                .ws-lang-option.active { background: #ecfdf5; color: #187A35; font-weight: bold; }
+                .ws-lang-option .ws-lang-flag { font-size: 16px; }
+                .ws-lang-option .fa-check { margin-left: auto; color: #187A35; }
             </style>
 
             <div style='font-family: sans-serif; padding: 10px 0;'>
-                
+
                 <div style='display: flex; gap: 15px; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 25px; flex-wrap: wrap;'>
-                    
+
                     <a href='{$templateManagerUrl}' class='ws-btn-outline'>
                         <i class='fas fa-file-code'></i> " . I18n::msg( 'dashboard.outline_settings' ) . "
                     </a>
                     <a href='{$sourceManagerUrl}' class='ws-btn-outline'>
                         <i class='fas fa-database'></i> " . I18n::msg( 'dashboard.source_settings' ) . "
                     </a>
-                    <button type='button' id='ws_lang_toggle' class='ws-btn-outline' style='border-radius: 25px; background: #ffffff;'>
-                        <i class='fas fa-language'></i> " . strtoupper( $lang ) . "
-                    </button>
+
+                    <div id='ws_lang_switcher' class='ws-lang-switcher'>
+                        <button type='button' id='ws_lang_toggle' class='ws-lang-btn' title='" . I18n::msg( 'dashboard.select_language' ) . "'>
+                            <i class='fas fa-globe'></i>
+                            <span id='ws_lang_current_label'>" . ( $lang === 'vi' ? 'Tiếng Việt' : 'English' ) . "</span>
+                            <i class='fas fa-chevron-down'></i>
+                        </button>
+                        <div id='ws_lang_menu' class='ws-lang-menu'>
+                            <button type='button' class='ws-lang-option" . ( $lang === 'vi' ? ' active' : '' ) . "' data-lang='vi'>
+                                <span class='ws-lang-flag'>🇻🇳</span> Tiếng Việt
+                                " . ( $lang === 'vi' ? "<i class='fas fa-check'></i>" : '' ) . "
+                            </button>
+                            <button type='button' class='ws-lang-option" . ( $lang === 'en' ? ' active' : '' ) . "' data-lang='en'>
+                                <span class='ws-lang-flag'>🇬🇧</span> English
+                                " . ( $lang === 'en' ? "<i class='fas fa-check'></i>" : '' ) . "
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <h2 class='ws-dashboard-title'>" . I18n::msg( 'dashboard.notebook_list' ) . "</h2>

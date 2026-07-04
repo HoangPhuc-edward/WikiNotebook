@@ -37,6 +37,7 @@
     "dashboard.outline_settings":  "Outline settings",
     "dashboard.source_settings":  "Source settings",
     "dashboard.notebook_list":  "Notebook list",
+    "dashboard.select_language":  "Select language",
     "api.error_server":  "Server error ({{status}})",
     "api.error_alert_prefix":  "Error: ",
     "template.page_title":  "Template list",
@@ -219,5 +220,15 @@
     "workspace.error_loading_data":  "An error occurred while loading data.",
     "workspace.error_loading_url":  "Error extracting URL:",
     "workspace.error_processing_file":  "Error: {{detail}}",
-    "workspace.error_network_upload":  "Network error while uploading the file"
+    "workspace.error_network_upload":  "Network error while uploading the file",
+    "workspace.tab_article":  "Article",
+    "workspace.tab_chat":  "Chatbot",
+    "workspace.chat_title":  "Chat with your notebook",
+    "workspace.chat_clear_history":  "Clear history",
+    "workspace.chat_clear_confirm":  "Are you sure you want to clear the whole chat history?",
+    "workspace.chat_empty":  "No conversation yet. Ask a question about your sources to get started!",
+    "workspace.chat_input_placeholder":  "Ask a question about your sources...",
+    "workspace.chat_send":  "Send",
+    "workspace.chat_sources_label":  "Sources:",
+    "workspace.chat_answering":  "AI is thinking of an answer..."
 }
